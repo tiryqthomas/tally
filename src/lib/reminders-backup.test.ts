@@ -76,6 +76,7 @@ describe('backups', () => {
     bills: [rent],
     transfers: [],
     accounts,
+    goals: [],
     startMonth: '2026-11',
     paidBills: ['rent:2026-11-01'],
     reminders: ['three-days', 'same-day'],
@@ -101,6 +102,7 @@ describe('backups', () => {
     expect(migrated.paidBills).toEqual([]);
     expect(migrated.reminders).toEqual(['day-before']);
     expect(migrated.homeChart).toBe('pace');
+    expect(migrated.goals).toEqual([]);
   });
 
   test('turns the single reminder setting into a list', () => {

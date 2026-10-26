@@ -1,4 +1,5 @@
 import { dateInMonth, daysInMonth, monthOf, monthsBetween, weekdayOf } from './dates';
+import { goalsSetAsideIn } from './goals';
 import { estimateMonthlyFromHourly } from './money';
 import type { Bill, BudgetData, DateString, Envelope, Income, IncomeChange, Month } from './types';
 
@@ -77,6 +78,9 @@ export interface EnvelopeMonth {
   billsSetAside: number;
   transfersIn: number;
   transfersOut: number;
+  // Only on Savings / Discretionary: moved into goals this month, less any
+  // money handed back from removed goals.
+  goalsSetAside: number;
   // Shortfall pulled in from Savings/Discretionary to bring this envelope back to zero.
   coveredBySavings: number;
   // What's left to spend. Only the savings envelope can be below zero.
@@ -130,6 +134,7 @@ function summarizeOne(data: BudgetData, month: Month, carry: Map<string, number>
     const monthTransfers = data.transfers.filter((t) => t.month === month);
     const transfersIn = sum(monthTransfers.filter((t) => t.toEnvelopeId === id));
     const transfersOut = sum(monthTransfers.filter((t) => t.fromEnvelopeId === id));
+    const goalsSetAside = envelope.isSavings ? goalsSetAsideIn(data.goals, month) : 0;
     return {
       envelope,
       limit,
@@ -138,8 +143,9 @@ function summarizeOne(data: BudgetData, month: Month, carry: Map<string, number>
       billsSetAside,
       transfersIn,
       transfersOut,
+      goalsSetAside,
       coveredBySavings: 0,
-      available: limit + rollover - spent - billsSetAside + transfersIn - transfersOut,
+      available: limit + rollover - spent - billsSetAside + transfersIn - transfersOut - goalsSetAside,
     };
   });
 

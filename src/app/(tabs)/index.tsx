@@ -173,7 +173,7 @@ function TapeRow({ row, onPress }: { row: EnvelopeMonth; onPress: () => void }) 
       <TickBar fraction={budget > 0 ? used / budget : negative ? 1 : 0} red={red} />
       <Text style={local.tapeSmall}>
         {row.envelope.isSavings
-          ? `${digits(row.limit)} ADDED · ${digits(row.rollover)} CARRIED`
+          ? `${digits(row.limit)} ADDED · ${digits(row.rollover)} CARRIED${row.goalsSetAside > 0 ? ` · ${digits(row.goalsSetAside)} GOALS` : ''}`
           : `${digits(row.spent)} SPENT${row.billsSetAside > 0 ? ` · ${digits(row.billsSetAside)} BILLS` : ''} · OF ${digits(budget)}`}
       </Text>
     </Pressable>

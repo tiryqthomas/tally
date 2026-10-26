@@ -84,6 +84,7 @@ export default function EnvelopeDetail() {
     ['Moved in', row.transfersIn],
     ['Moved out', -row.transfersOut],
     ['Bills set aside', -row.billsSetAside],
+    [row.goalsSetAside < 0 ? 'Returned from goals' : 'Set aside for goals', -row.goalsSetAside],
     ['Spent', -row.spent],
     ['Covered by savings', row.coveredBySavings],
     ['Covered other categories', envelope.isSavings ? -summary.totalCovered : 0],

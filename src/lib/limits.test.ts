@@ -49,6 +49,7 @@ const data = (): BudgetData => ({
   ],
   transfers: [],
   accounts: [],
+  goals: [],
   startMonth: "2026-06",
 });
 

@@ -26,6 +26,7 @@ export function migrateState(state: Record<string, unknown>, version: number): S
   // v3 allows several reminders per bill, so the one saved timing becomes a list.
   s.reminders = toReminderSetting(s.reminders);
   s.homeChart ??= 'pace';
+  s.goals ??= [];
   return s as unknown as SavedState;
 }
 
@@ -57,7 +58,7 @@ export function parseBackup(text: string): ParsedBackup {
     return { ok: false, error: 'This backup was made by a newer version of Tally. Update the app and try again.' };
   }
   const state = migrateState(file.state as unknown as Record<string, unknown>, file.version);
-  const lists = [state.envelopes, state.expenses, state.bills, state.transfers, state.accounts, state.incomes];
+  const lists = [state.envelopes, state.expenses, state.bills, state.transfers, state.accounts, state.incomes, state.goals];
   if (!lists.every(Array.isArray) || typeof state.startMonth !== 'string') {
     return { ok: false, error: 'This backup is damaged and could not be read.' };
   }

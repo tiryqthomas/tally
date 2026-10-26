@@ -68,6 +68,24 @@ export interface IncomeChange {
   income: Income;
 }
 
+// Something to buy. Each month from its creation a set amount moves out of
+// Savings / Discretionary into the goal, until it is fully saved.
+export interface Goal {
+  id: string;
+  name: string;
+  price: number;
+  targetDate: DateString;
+  // The monthly amount in effect is the latest change at or before a month,
+  // like category limits.
+  allocations: LimitChange[];
+  createdMonth: Month;
+  // Set when bought. The saved money paid for it, and set-asides stop after this month.
+  boughtMonth?: Month;
+  // Set when removed. Unless it was bought, everything saved goes back to
+  // Savings / Discretionary in this month.
+  removedMonth?: Month;
+}
+
 export interface BudgetData {
   // Income in effect for a month is the latest change at or before it,
   // so a raise never rewrites past months' savings.
@@ -77,6 +95,7 @@ export interface BudgetData {
   bills: Bill[];
   transfers: Transfer[];
   accounts: Account[];
+  goals: Goal[];
   // First month the budget exists. Rollover is computed from here.
   startMonth: Month;
 }
