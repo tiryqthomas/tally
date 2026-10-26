@@ -7,7 +7,7 @@ import { digits as asDigits, Display, DisplayDigits, DisplayLabel, DisplayNote }
 import { spacing } from '@/components/theme';
 import { Button, Card, Chips, Field, SectionTitle, styles as ui } from '@/components/ui';
 import { summarizeMonth } from '@/lib/budget';
-import { currentMonth, monthOf, shortDateLabel, toDateString, today } from '@/lib/dates';
+import { currentMonth, monthLabel, monthOf, shortDateLabel, toDateString, today } from '@/lib/dates';
 import { useMonthSummary } from '@/lib/hooks';
 import { formatMoney, parseMoney } from '@/lib/money';
 import { selectData, useBudget } from '@/lib/store';
@@ -32,6 +32,9 @@ export default function AddExpense() {
   const [newLimit, setNewLimit] = useState('');
 
   const cents = typedCents(digits);
+  // Set when editing an expense from an earlier month.
+  const pastMonth = existing && monthOf(existing.date) < currentMonth() ? monthOf(existing.date) : undefined;
+  const savingsName = summary.envelopes.find((e) => e.envelope.isSavings)?.envelope.name ?? 'Savings';
 
   function press(key: string) {
     setDigits((d) => applyKey(d, key));
@@ -64,7 +67,7 @@ export default function AddExpense() {
     const name = newName.trim();
     const limit = parseMoney(newLimit);
     if (!name || limit === null) return;
-    setEnvelopeId(useBudget.getState().addEnvelope(name, limit));
+    setEnvelopeId(useBudget.getState().addEnvelope(name, limit, existing && monthOf(existing.date)));
     setAdding(false);
     setNewName('');
     setNewLimit('');
@@ -94,19 +97,16 @@ export default function AddExpense() {
         options={summary.envelopes.map((e) => ({ value: e.envelope.id, label: e.envelope.name }))}
         value={envelopeId}
         onChange={setEnvelopeId}
-        // New categories start this month, so they can't hold an older expense being edited.
         trailing={
-          !existing && (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Add a category"
-              accessibilityState={{ expanded: adding }}
-              onPress={() => setAdding((a) => !a)}
-              style={[ui.chip, adding && ui.chipSelected]}
-            >
-              <Text style={[ui.chipText, adding && ui.chipTextSelected]}>{adding ? '×' : '+'}</Text>
-            </Pressable>
-          )
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Add a category"
+            accessibilityState={{ expanded: adding }}
+            onPress={() => setAdding((a) => !a)}
+            style={[ui.chip, adding && ui.chipSelected]}
+          >
+            <Text style={[ui.chipText, adding && ui.chipTextSelected]}>{adding ? '×' : '+'}</Text>
+          </Pressable>
         }
       />
       {adding && (
@@ -125,6 +125,12 @@ export default function AddExpense() {
             onPress={addCategory}
             disabled={!newName.trim() || parseMoney(newLimit) === null}
           />
+          {pastMonth && (
+            <Text style={ui.muted}>
+              This expense is from {monthLabel(pastMonth)}. The new category starts there with no limit, so{' '}
+              {savingsName} covers it that month. The limit applies from this month on.
+            </Text>
+          )}
         </Card>
       )}
 
