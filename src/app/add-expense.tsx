@@ -92,7 +92,7 @@ export default function AddExpense() {
   return (
     <ScrollView style={ui.screen} contentContainerStyle={{ padding: spacing.md }} keyboardShouldPersistTaps="handled">
       {existing && <Stack.Screen options={{ title: 'Edit spending' }} />}
-      <SectionTitle>Category</SectionTitle>
+      <SectionTitle first>Category</SectionTitle>
       <Chips
         options={summary.envelopes.map((e) => ({ value: e.envelope.id, label: e.envelope.name }))}
         value={envelopeId}

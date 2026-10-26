@@ -13,10 +13,10 @@ export const INK = {
   line: machine.digit,
   dim: machine.digitDim,
   faint: machine.digitFaint,
-  red: '#FF7A6E',
+  red: machine.digitRed,
   yellow: machine.yellow,
-  blue: '#8EA3E0',
-  white: '#F2F3F5',
+  blue: machine.digitBlue,
+  white: machine.digitWhite,
 };
 
 export const FONT = { fontFamily: fonts.display, fontSize: 11 };

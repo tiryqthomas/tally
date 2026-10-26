@@ -46,8 +46,8 @@ export function BillCard({ bill, date, detail, onPress }: { bill: Bill; date: Da
               alignItems: 'center',
               gap: 4,
               paddingHorizontal: 12,
-              paddingVertical: 6,
-              borderRadius: radius.sm,
+              paddingVertical: 10,
+              borderRadius: radius.key,
               backgroundColor: paid ? colors.background : colors.accentSoft,
             }}
           >

@@ -92,7 +92,7 @@ export default function SettingsScreen() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-      <SectionTitle>Monthly income</SectionTitle>
+      <SectionTitle first>Monthly income</SectionTitle>
       <IncomeForm draft={draft} onChange={setDraft} />
       <Button title="Save income" onPress={saveIncome} disabled={!parsed} />
 

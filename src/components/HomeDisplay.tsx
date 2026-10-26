@@ -104,7 +104,7 @@ export function HomeDisplay({
   return (
     <>
       <DisplayLabel>{content.label}</DisplayLabel>
-      <DisplayDigits>{content.value}</DisplayDigits>
+      <DisplayDigits roll accessibilityLabel={`${content.label}: ${content.value}`}>{content.value}</DisplayDigits>
       <DisplayNote>{content.note}</DisplayNote>
       {content.body}
     </>
