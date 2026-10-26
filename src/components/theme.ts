@@ -11,6 +11,14 @@ export const colors = {
   warning: '#C98A1B',
 };
 
+// Chart series colors, checked for color-blind separation and 3:1 contrast on white.
+export const chart = {
+  variable: '#1F8A5B',
+  fixed: '#4F6BD8',
+  pace: '#9A9488',
+  grid: '#ECE8DF',
+};
+
 export const spacing = { xs: 4, sm: 8, md: 16, lg: 24, xl: 32 };
 
 export const radius = { sm: 8, md: 14, lg: 20 };

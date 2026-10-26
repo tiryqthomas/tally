@@ -1,11 +1,11 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { colors, radius, spacing } from '@/components/theme';
 import { Button, Chips, Field, SectionTitle, styles as ui } from '@/components/ui';
 import { summarizeMonth } from '@/lib/budget';
-import { currentMonth, monthOf, toDateString, today } from '@/lib/dates';
+import { currentMonth, monthOf, shortDateLabel, toDateString, today } from '@/lib/dates';
 import { useMonthSummary } from '@/lib/hooks';
 import { formatMoney } from '@/lib/money';
 import { selectData, useBudget } from '@/lib/store';
@@ -16,13 +16,15 @@ type DayChoice = 'today' | 'yesterday';
 
 export default function AddExpense() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ envelopeId?: string }>();
-  const summary = useMonthSummary(currentMonth());
-  const addExpense = useBudget((s) => s.addExpense);
+  const params = useLocalSearchParams<{ envelopeId?: string; id?: string }>();
+  // Set when editing an expense that was already logged.
+  const existing = useBudget((s) => s.expenses.find((x) => x.id === params.id));
+  const summary = useMonthSummary(existing ? monthOf(existing.date) : currentMonth());
+  const { addExpense, updateExpense, deleteExpense } = useBudget.getState();
 
-  const [envelopeId, setEnvelopeId] = useState(params.envelopeId ?? summary.envelopes[0]?.envelope.id);
-  const [digits, setDigits] = useState('');
-  const [note, setNote] = useState('');
+  const [envelopeId, setEnvelopeId] = useState(existing?.envelopeId ?? params.envelopeId ?? summary.envelopes[0]?.envelope.id);
+  const [digits, setDigits] = useState(existing ? (existing.amount / 100).toFixed(2) : '');
+  const [note, setNote] = useState(existing?.note ?? '');
   const [day, setDay] = useState<DayChoice>('today');
 
   const cents = digits ? Math.round(Number(digits) * 100) : 0;
@@ -37,6 +39,10 @@ export default function AddExpense() {
 
   function save() {
     if (!envelopeId || cents <= 0) return;
+    if (existing) {
+      updateExpense(existing.id, { envelopeId, amount: cents, note: note.trim() || undefined });
+      return router.back();
+    }
     const date = day === 'today' ? today() : toDateString(new Date(Date.now() - 86_400_000));
     addExpense({ envelopeId, amount: cents, date, note: note.trim() || undefined });
 
@@ -54,17 +60,32 @@ export default function AddExpense() {
     );
   }
 
+  function remove() {
+    if (!existing) return;
+    const done = () => {
+      deleteExpense(existing.id);
+      router.back();
+    };
+    // Alerts with buttons don't show on web.
+    if (Platform.OS === 'web') return done();
+    Alert.alert('Delete this expense?', `${formatMoney(existing.amount)}${existing.note ? ` · ${existing.note}` : ''}`, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: done },
+    ]);
+  }
+
   const selected = summary.envelopes.find((e) => e.envelope.id === envelopeId);
 
   return (
     <ScrollView style={ui.screen} contentContainerStyle={{ padding: spacing.md }} keyboardShouldPersistTaps="handled">
+      {existing && <Stack.Screen options={{ title: 'Edit spending' }} />}
       <SectionTitle>Envelope</SectionTitle>
       <Chips
         options={summary.envelopes.map((e) => ({ value: e.envelope.id, label: e.envelope.name }))}
         value={envelopeId}
         onChange={setEnvelopeId}
       />
-      {selected && <Text style={ui.muted}>{formatMoney(selected.available)} left before this</Text>}
+      {selected && !existing && <Text style={ui.muted}>{formatMoney(selected.available)} left before this</Text>}
 
       <Text style={local.amount} accessibilityLabel="Amount">
         ${digits || '0'}
@@ -78,16 +99,25 @@ export default function AddExpense() {
         ))}
       </View>
 
-      <Chips
-        options={[
-          { value: 'today', label: 'Today' },
-          { value: 'yesterday', label: 'Yesterday' },
-        ]}
-        value={day}
-        onChange={setDay}
-      />
+      {existing ? (
+        <Text style={[ui.muted, { marginBottom: spacing.md }]}>Logged {shortDateLabel(existing.date)}</Text>
+      ) : (
+        <Chips
+          options={[
+            { value: 'today', label: 'Today' },
+            { value: 'yesterday', label: 'Yesterday' },
+          ]}
+          value={day}
+          onChange={setDay}
+        />
+      )}
       <Field label="Note (optional)" value={note} onChangeText={setNote} placeholder="Where or what" />
-      <Button title={cents > 0 ? `Spend ${formatMoney(cents)}` : 'Enter an amount'} onPress={save} disabled={cents <= 0 || !envelopeId} />
+      <Button
+        title={cents <= 0 ? 'Enter an amount' : existing ? 'Save changes' : `Spend ${formatMoney(cents)}`}
+        onPress={save}
+        disabled={cents <= 0 || !envelopeId}
+      />
+      {existing && <Button title="Delete" variant="danger" onPress={remove} />}
     </ScrollView>
   );
 }

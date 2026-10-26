@@ -36,10 +36,12 @@ The rules live in `src/lib/budget.ts` and are covered by tests (`npm test`).
 | Path | What it holds |
 | --- | --- |
 | `src/app/` | Screens. Every file is a route (Expo Router). |
-| `src/app/(tabs)/` | The three tabs: Envelopes, Bills, Settings. |
+| `src/app/(tabs)/` | The three tabs: Home (dashboard), Transactions, Settings. |
+| `src/app/spending.tsx`, `src/app/bills.tsx` | Drill-downs from the Home chart and the bills widget. |
 | `src/lib/budget.ts` | Budget math (pure functions, tested). |
+| `src/lib/analysis.ts` | Spending pace, fixed vs variable totals, bills ahead (tested). |
 | `src/lib/store.ts` | App state, saved on the phone. |
-| `src/components/` | Shared UI pieces, the calendar, and the theme. |
+| `src/components/` | Shared UI pieces, charts, the calendar, and the theme. |
 
 ## Commands
 

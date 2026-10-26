@@ -29,6 +29,8 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="onboarding" options={{ headerShown: false, gestureEnabled: false }} />
         <Stack.Screen name="envelope/[id]" options={{ title: '' }} />
+        <Stack.Screen name="spending" options={{ title: 'Spending' }} />
+        <Stack.Screen name="bills" options={{ title: 'Bills' }} />
         <Stack.Screen name="add-expense" options={{ presentation: 'modal', title: 'Log spending' }} />
         <Stack.Screen name="bill" options={{ presentation: 'modal', title: 'Bill' }} />
         <Stack.Screen name="move-money" options={{ presentation: 'modal', title: 'Move money' }} />
