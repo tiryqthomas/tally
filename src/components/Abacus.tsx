@@ -1,13 +1,25 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, View, type LayoutChangeEvent } from 'react-native';
+import Svg, { Line, Polygon } from 'react-native-svg';
 
 import { motionAllowed } from './machine';
 import { colors, motion } from './theme';
 
 const BEADS = 10;
-const BEAD_W = 16;
-const BEAD_H = 12;
+// Soroban beads: two cones joined at their wide edge, seen side-on. The rod runs through the points.
+const BEAD_W = 12;
+const BEAD_H = 18;
 const GAP = 2;
+const BICONE = [
+  [0, BEAD_H / 2],
+  [BEAD_W / 2 - 1.5, 0.75],
+  [BEAD_W / 2 + 1.5, 0.75],
+  [BEAD_W, BEAD_H / 2],
+  [BEAD_W / 2 + 1.5, BEAD_H - 0.75],
+  [BEAD_W / 2 - 1.5, BEAD_H - 0.75],
+]
+  .map((p) => p.join(','))
+  .join(' ');
 const post = { position: 'absolute', top: 0, bottom: 0, width: 2, borderRadius: 1, backgroundColor: colors.border } as const;
 
 // One rod of an abacus: ten beads, each a tenth of the budget. Beads for what's been used slide
@@ -38,7 +50,7 @@ export function AbacusRod({ fraction, red }: { fraction: number; red?: boolean }
 
   return (
     <View
-      style={{ height: BEAD_H + 4, marginTop: 6, justifyContent: 'center' }}
+      style={{ height: BEAD_H + 2, marginTop: 6, justifyContent: 'center' }}
       onLayout={(e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width)}
       importantForAccessibility="no-hide-descendants"
     >
@@ -51,21 +63,36 @@ export function AbacusRod({ fraction, red }: { fraction: number; red?: boolean }
           const x = restX(i);
           // Used beads start where they'd sit if nothing had been spent, then slide left.
           const from = i < used ? width - (BEADS - i) * step : x;
+          const on = i < used;
           return (
             <Animated.View
               key={i}
               style={{
                 position: 'absolute',
                 left: 0,
-                width: BEAD_W,
-                height: BEAD_H,
-                borderRadius: BEAD_H / 2,
-                backgroundColor: i < used ? ink : colors.card,
-                borderWidth: 1.5,
-                borderColor: i < used ? ink : colors.accent,
                 transform: [{ translateX: slide.interpolate({ inputRange: [0, 1], outputRange: [from, x] }) }],
               }}
-            />
+            >
+              <Svg width={BEAD_W} height={BEAD_H}>
+                <Polygon
+                  points={BICONE}
+                  fill={on ? ink : colors.card}
+                  stroke={on ? ink : colors.accent}
+                  strokeWidth={1.25}
+                  strokeLinejoin="round"
+                />
+                {/* The ridge where the two cones meet. */}
+                <Line
+                  x1={BEAD_W / 2}
+                  y1={1.5}
+                  x2={BEAD_W / 2}
+                  y2={BEAD_H - 1.5}
+                  stroke={on ? colors.card : colors.accent}
+                  strokeOpacity={on ? 0.35 : 0.5}
+                  strokeWidth={1}
+                />
+              </Svg>
+            </Animated.View>
           );
         })}
     </View>
