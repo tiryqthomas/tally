@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, View, type LayoutChangeEvent } from 'react-native';
-import Svg, { Line, Polygon } from 'react-native-svg';
+import Svg, { Polygon } from 'react-native-svg';
 
 import { motionAllowed } from './machine';
 import { colors, motion } from './theme';
@@ -80,16 +80,6 @@ export function AbacusRod({ fraction, red }: { fraction: number; red?: boolean }
                   stroke={on ? ink : colors.accent}
                   strokeWidth={1.25}
                   strokeLinejoin="round"
-                />
-                {/* The ridge where the two cones meet. */}
-                <Line
-                  x1={BEAD_W / 2}
-                  y1={1.5}
-                  x2={BEAD_W / 2}
-                  y2={BEAD_H - 1.5}
-                  stroke={on ? colors.card : colors.accent}
-                  strokeOpacity={on ? 0.35 : 0.5}
-                  strokeWidth={1}
                 />
               </Svg>
             </Animated.View>
