@@ -108,8 +108,8 @@ export default function GoalScreen() {
             onPress={() => setAllocation(toInput(plan.suggested))}
             style={{ marginTop: -spacing.sm, marginBottom: spacing.md }}
           >
-            <Text style={{ fontFamily: fonts.bold, fontSize: 14, letterSpacing: 1, color: colors.accent }}>
-              USE {formatMoney(plan.suggested)} / MONTH TO BUY IT BY {monthLabel(monthOf(date)).toUpperCase()}
+            <Text style={{ fontFamily: fonts.label, fontSize: 15, color: colors.accent, paddingVertical: spacing.sm }}>
+              Use {formatMoney(plan.suggested)} a month to buy it by {monthLabel(monthOf(date))} ›
             </Text>
           </Pressable>
         )}

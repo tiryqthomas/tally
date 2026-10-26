@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View, type TextInputProps, type ViewStyle } from 'react-native';
 
 import { keyColors } from './machine';
-import { colors, fonts, radius, spacing } from './theme';
+import { colors, fonts, radius, spacing, type } from './theme';
 
 export function Card({ children, style }: { children: ReactNode; style?: ViewStyle }) {
   return <View style={[styles.card, style]}>{children}</View>;
@@ -19,8 +19,8 @@ export function Button({
   variant?: 'primary' | 'secondary' | 'danger' | 'spend';
   disabled?: boolean;
 }) {
-  // Each variant is a calculator key: grey, light, or red.
-  const key = keyColors(variant === 'primary' ? 'grey' : variant === 'secondary' ? 'light' : 'red');
+  // Each variant is a calculator key: grey, light, or red. A disabled key is a plain light key, not a faded one.
+  const key = keyColors(disabled ? 'light' : variant === 'primary' ? 'grey' : variant === 'secondary' ? 'light' : 'red');
   return (
     <Pressable
       accessibilityRole="button"
@@ -28,12 +28,12 @@ export function Button({
       disabled={disabled}
       style={({ pressed }) => [
         styles.button,
-        { backgroundColor: key.face, borderBottomColor: key.edge },
+        { backgroundColor: key.face, borderBottomColor: key.edge, borderTopColor: key.lip },
         pressed && styles.buttonPressed,
-        disabled && { opacity: 0.4 },
+        disabled && styles.buttonDisabled,
       ]}
     >
-      <Text style={[styles.buttonText, { color: key.text }]}>{title}</Text>
+      <Text style={[styles.buttonText, { color: disabled ? colors.muted : key.text }]}>{title}</Text>
     </Pressable>
   );
 }
@@ -125,17 +125,18 @@ export function ProgressBar({ fraction, danger }: { fraction: number; danger?: b
   );
 }
 
-export function SectionTitle({ children }: { children: ReactNode }) {
-  return <Text style={styles.sectionTitle}>{children}</Text>;
+// `first` drops the gap above, for a title at the very top of a screen.
+export function SectionTitle({ children, first }: { children: ReactNode; first?: boolean }) {
+  return <Text style={[styles.sectionTitle, first && { marginTop: spacing.xs }]}>{children}</Text>;
 }
 
 export const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.md, paddingBottom: 120 },
+  content: { padding: spacing.gutter, paddingBottom: 132 },
   card: {
     backgroundColor: colors.card,
-    borderRadius: 3,
-    padding: spacing.md,
+    borderRadius: radius.paper,
+    padding: spacing.gutter,
     marginBottom: spacing.sm,
     shadowColor: '#000',
     shadowOpacity: 0.08,
@@ -144,8 +145,11 @@ export const styles = StyleSheet.create({
     elevation: 1,
   },
   button: {
-    borderRadius: radius.md,
+    borderRadius: radius.key,
     borderBottomWidth: 4,
+    borderTopWidth: 1,
+    minHeight: 52,
+    justifyContent: 'center',
     paddingVertical: 13,
     alignItems: 'center',
     marginBottom: spacing.sm,
@@ -155,26 +159,31 @@ export const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
   },
-  buttonPressed: { borderBottomWidth: 1, marginTop: 3 },
+  // A transform moves only this key; changing its margin would nudge everything below it.
+  buttonPressed: { transform: [{ translateY: 3 }], shadowOpacity: 0.08 },
+  buttonDisabled: { shadowOpacity: 0, elevation: 0 },
   buttonText: { fontFamily: fonts.bold, fontSize: 16, letterSpacing: 1.2, textTransform: 'uppercase' },
-  label: { fontFamily: fonts.bold, fontSize: 12, color: colors.muted, marginBottom: spacing.xs, letterSpacing: 1, textTransform: 'uppercase' },
+  label: { fontFamily: fonts.bold, ...type.label, color: colors.muted, marginBottom: spacing.sm - 2, textTransform: 'uppercase' },
   input: {
     backgroundColor: colors.card,
-    borderRadius: 3,
+    borderRadius: radius.paper,
     borderWidth: 1,
     borderColor: colors.border,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 13,
     fontFamily: fonts.mono,
     fontSize: 16,
     color: colors.text,
   },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.md },
   // Chips are small keys: light grey, blue when picked.
+  // At least 44pt tall, Apple's minimum touch target.
   chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: radius.sm,
+    minHeight: 44,
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: radius.key,
     backgroundColor: keyColors('light').face,
     borderBottomWidth: 3,
     borderBottomColor: keyColors('light').edge,
@@ -186,17 +195,18 @@ export const styles = StyleSheet.create({
   barFill: { height: 6 },
   sectionTitle: {
     fontFamily: fonts.bold,
-    fontSize: 13,
+    ...type.label,
+    fontSize: 12,
     color: colors.muted,
     textTransform: 'uppercase',
-    letterSpacing: 1.4,
-    marginTop: spacing.lg,
-    marginBottom: spacing.sm,
+    marginTop: spacing.xl,
+    marginBottom: spacing.sm + 2,
   },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  title: { fontFamily: fonts.bold, fontSize: 18, color: colors.text },
-  body: { fontFamily: fonts.body, fontSize: 16, color: colors.text },
-  muted: { fontFamily: fonts.body, fontSize: 14, color: colors.muted },
-  big: { fontFamily: fonts.display, fontSize: 36, color: colors.text },
-  money: { fontFamily: fonts.mono, fontSize: 15, color: colors.text },
+  screenTitle: { fontFamily: fonts.bold, ...type.title, color: colors.text },
+  title: { fontFamily: fonts.bold, ...type.headline, color: colors.text },
+  body: { fontFamily: fonts.body, ...type.body, color: colors.text },
+  muted: { fontFamily: fonts.body, ...type.body, color: colors.muted },
+  big: { fontFamily: fonts.display, ...type.hero, color: colors.text },
+  money: { fontFamily: fonts.mono, ...type.body, color: colors.text },
 });

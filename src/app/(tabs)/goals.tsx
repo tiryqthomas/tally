@@ -1,9 +1,9 @@
 import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
-import { digits, Display, DisplayDigits, DisplayLabel, DisplayNote, Key, KeyLabel, PaperTape, TickBar } from '@/components/machine';
-import { colors, fonts, spacing } from '@/components/theme';
+import { digits, Display, DisplayDigits, DisplayLabel, DisplayNote, Key, KeyLabel, PaperTape, PrintIn, tape, TickBar } from '@/components/machine';
+import { colors, spacing } from '@/components/theme';
 import { SectionTitle, styles } from '@/components/ui';
 import { currentMonth, monthLabel, shortDateLabel } from '@/lib/dates';
 import { goalProgress, type GoalProgress } from '@/lib/goals';
@@ -28,13 +28,13 @@ export default function GoalsScreen() {
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <Display>
         <DisplayLabel>Saved for goals</DisplayLabel>
-        <DisplayDigits>{digits(saved)}</DisplayDigits>
+        <DisplayDigits roll>{digits(saved)}</DisplayDigits>
         <DisplayNote>{digits(perMonth)} / MO FROM SAVINGS</DisplayNote>
         {savings && <DisplayNote>SAVINGS LEFT {digits(savings.available)}</DisplayNote>}
       </Display>
 
-      <Key color="blue" style={{ marginTop: spacing.md }} onPress={() => router.push('/goal')} accessibilityLabel="Add a goal">
-        <KeyLabel color="blue" label="+ New goal" value="Something to buy" />
+      <Key color="light" style={{ marginTop: spacing.md }} onPress={() => router.push('/goal')} accessibilityLabel="Add a goal">
+        <KeyLabel color="light" label="+ New goal" value="Something to buy" />
       </Key>
 
       {open.length === 0 ? (
@@ -46,7 +46,9 @@ export default function GoalsScreen() {
         <>
           <SectionTitle>Saving for</SectionTitle>
           {open.map((p) => (
-            <GoalTape key={p.goal.id} progress={p} onPress={() => router.push({ pathname: '/goal', params: { id: p.goal.id } })} />
+            <PrintIn key={p.goal.id}>
+              <GoalTape progress={p} onPress={() => router.push({ pathname: '/goal', params: { id: p.goal.id } })} />
+            </PrintIn>
           ))}
           <Text style={styles.muted}>Set aside on the 1st of each month from Savings / Discretionary.</Text>
         </>
@@ -61,12 +63,12 @@ export default function GoalsScreen() {
                 key={p.goal.id}
                 accessibilityRole="button"
                 onPress={() => router.push({ pathname: '/goal', params: { id: p.goal.id } })}
-                style={[local.line, { paddingVertical: 4 }]}
+                style={[tape.line, tape.row]}
               >
-                <Text style={[local.tape, { flex: 1, color: colors.muted }]} numberOfLines={1}>
-                  {p.goal.name.toUpperCase()} · {monthLabel(p.goal.boughtMonth!).toUpperCase()}
+                <Text style={[tape.text, { flex: 1, color: colors.muted }]} numberOfLines={1}>
+                  {p.goal.name.toUpperCase()} · {monthLabel(p.goal.boughtMonth!)}
                 </Text>
-                <Text style={[local.tape, { color: colors.muted }]}>{digits(p.saved)} ✓</Text>
+                <Text style={[tape.text, { color: colors.muted }]}>{digits(p.saved)} √</Text>
               </Pressable>
             ))}
           </PaperTape>
@@ -80,38 +82,31 @@ export default function GoalsScreen() {
 function GoalTape({ progress: p, onPress }: { progress: GoalProgress; onPress: () => void }) {
   const behind = p.status === 'behind';
   const ink = behind ? { color: colors.danger } : undefined;
-  const target = shortDateLabel(p.goal.targetDate).toUpperCase();
+  const target = shortDateLabel(p.goal.targetDate);
   let plan: string;
-  if (p.status === 'saved') plan = `FULLY SAVED · READY TO BUY`;
-  else if (p.allocation === 0) plan = `PAUSED · NEEDS ${digits(p.suggested)} / MO FOR ${target}`;
-  else if (behind) plan = `${digits(p.allocation)} / MO · NEEDS ${digits(p.suggested)} FOR ${target}`;
-  else plan = `${digits(p.allocation)} / MO · DONE ${monthLabel(p.doneMonth!).toUpperCase()}`;
+  if (p.status === 'saved') plan = `Fully saved · ready to buy`;
+  else if (p.allocation === 0) plan = `Paused · needs ${digits(p.suggested)} a month for ${target}`;
+  else if (behind) plan = `${digits(p.allocation)} a month · needs ${digits(p.suggested)} for ${target}`;
+  else plan = `${digits(p.allocation)} a month · done ${monthLabel(p.doneMonth!)}`;
 
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`${p.goal.name} goal`}>
       <PaperTape>
-        <View style={local.line}>
-          <Text style={[local.tapeBold, { flex: 1 }]} numberOfLines={1}>
+        <View style={tape.line}>
+          <Text style={[tape.name, { flex: 1 }]} numberOfLines={1}>
             {p.goal.name.toUpperCase()}
           </Text>
-          <Text style={local.tapeSmall}>BY {target}</Text>
+          <Text style={[tape.caption, { marginTop: 0 }]}>by {target}</Text>
         </View>
-        <View style={[local.line, { marginTop: 4 }]}>
-          <Text style={local.tape}>{digits(p.saved)}</Text>
-          <Text style={local.tape}>OF {digits(p.goal.price)}</Text>
+        <View style={[tape.line, { marginTop: spacing.xs }]}>
+          <Text style={tape.text}>{digits(p.saved)}</Text>
+          <Text style={tape.text}>of {digits(p.goal.price)}</Text>
         </View>
         <TickBar fraction={p.goal.price > 0 ? p.saved / p.goal.price : 1} />
-        <Text style={[local.tapeSmall, ink]}>
-          {plan} {behind ? '◆' : p.status === 'saved' ? '*' : '+'}
+        <Text style={[tape.caption, ink]}>
+          {behind ? `◆ ${plan}` : `${plan} ${p.status === 'saved' ? '*' : '+'}`}
         </Text>
       </PaperTape>
     </Pressable>
   );
 }
-
-const local = StyleSheet.create({
-  line: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.sm },
-  tape: { fontFamily: fonts.mono, fontSize: 13, color: colors.text },
-  tapeBold: { fontFamily: fonts.monoBold, fontSize: 14, color: colors.text },
-  tapeSmall: { fontFamily: fonts.mono, fontSize: 11, color: colors.muted, marginTop: 3 },
-});

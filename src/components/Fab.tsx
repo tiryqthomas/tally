@@ -13,6 +13,6 @@ export function Fab({ onPress, label = 'Log spending' }: { onPress: () => void; 
 }
 
 const styles = StyleSheet.create({
-  fab: { position: 'absolute', left: 16, right: 16, bottom: 16, alignItems: 'center', paddingVertical: 14 },
+  fab: { position: 'absolute', left: 20, right: 20, bottom: 16, alignItems: 'center', minHeight: 56, justifyContent: 'center' },
   text: { fontFamily: fonts.bold, fontSize: 17, letterSpacing: 1.6, color: '#fff', textTransform: 'uppercase' },
 });

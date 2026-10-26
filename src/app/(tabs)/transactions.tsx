@@ -1,12 +1,12 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { Fab } from '@/components/Fab';
 import { MonthSwitcher } from '@/components/MonthSwitcher';
-import { chart, colors, spacing } from '@/components/theme';
-import { Card, Chips, SectionTitle, styles } from '@/components/ui';
+import { digits, PaperTape, PrintIn, tape } from '@/components/machine';
+import { colors, fonts, spacing } from '@/components/theme';
+import { Chips, styles } from '@/components/ui';
 import { expensesIn } from '@/lib/analysis';
 import { billKey, billsInMonth } from '@/lib/budget';
 import { currentMonth, shortDateLabel, today, weekdayOf } from '@/lib/dates';
@@ -96,7 +96,7 @@ export default function TransactionsScreen() {
           <Text style={styles.muted}>
             {rows.length} {rows.length === 1 ? 'transaction' : 'transactions'}
           </Text>
-          <Text style={[styles.money, { fontSize: 18 }]}>{formatMoney(total)}</Text>
+          <Text style={[styles.money, { fontFamily: fonts.monoBold, fontSize: 17 }]}>{formatMoney(total)}</Text>
         </View>
 
         {groups.length === 0 && (
@@ -104,39 +104,31 @@ export default function TransactionsScreen() {
         )}
         {groups.map((g) => (
           <View key={g.date}>
-            <SectionTitle>
+            <Text style={[styles.label, { marginTop: spacing.md }]}>
               {WEEKDAYS[weekdayOf(g.date)]}, {shortDateLabel(g.date)}
-            </SectionTitle>
-            <Card style={{ paddingVertical: spacing.xs }}>
+            </Text>
+            <PaperTape>
               {g.rows.map((r, i) => (
-                <Pressable
-                  key={r.key}
-                  onPress={r.onPress}
-                  accessibilityRole="button"
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: spacing.sm,
-                    paddingVertical: spacing.sm,
-                    borderTopWidth: i ? 1 : 0,
-                    borderTopColor: colors.border,
-                  }}
-                >
-                  <Ionicons
-                    name={r.kind === 'bill' ? 'calendar-outline' : 'cash-outline'}
-                    size={20}
-                    color={r.kind === 'bill' ? chart.fixed : chart.variable}
-                  />
-                  <View style={{ flex: 1, minWidth: 0 }}>
-                    <Text style={styles.body} numberOfLines={1}>
-                      {r.title}
-                    </Text>
-                    <Text style={styles.muted}>{r.detail}</Text>
-                  </View>
-                  <Text style={styles.money}>{formatMoney(r.amount)}</Text>
-                </Pressable>
+                <PrintIn key={r.key}>
+                  <Pressable
+                    onPress={r.onPress}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${r.title}, ${formatMoney(r.amount)}, ${r.detail}`}
+                    style={[tape.row, i > 0 && { borderTopWidth: 1, borderTopColor: colors.border }]}
+                  >
+                    <View style={tape.line}>
+                      <Text style={[tape.name, { flex: 1 }]} numberOfLines={1}>
+                        {r.title.toUpperCase()}
+                      </Text>
+                      <Text style={tape.name}>
+                        {digits(r.amount)} {r.kind === 'bill' ? '*' : '−'}
+                      </Text>
+                    </View>
+                    <Text style={tape.caption}>{r.detail}</Text>
+                  </Pressable>
+                </PrintIn>
               ))}
-            </Card>
+            </PaperTape>
           </View>
         ))}
       </ScrollView>

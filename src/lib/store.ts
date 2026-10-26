@@ -7,7 +7,7 @@ import { billKey } from './budget';
 import { currentMonth, today } from './dates';
 import type { HomeChart } from './homeCharts';
 import type { ReminderSetting } from './reminderPlan';
-import type { Account, Bill, BudgetData, DateString, Envelope, Expense, Goal, Income, Transfer } from './types';
+import type { Account, Bill, BudgetData, DateString, Envelope, Expense, Goal, Income, Month, Transfer } from './types';
 
 const newId = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
 
