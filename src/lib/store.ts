@@ -5,6 +5,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import { migrateState, STATE_VERSION, type SavedState } from './backup';
 import { billKey } from './budget';
 import { currentMonth, today } from './dates';
+import type { HomeChart } from './homeCharts';
 import type { ReminderSetting } from './reminderPlan';
 import type { Account, Bill, BudgetData, DateString, Envelope, Expense, Income, Transfer } from './types';
 
@@ -32,6 +33,7 @@ interface BudgetState extends SavedState {
   // Marks one due date of a bill paid, or unpaid if it already was.
   togglePaid: (billId: string, date: DateString) => void;
   setReminders: (setting: ReminderSetting) => void;
+  setHomeChart: (chart: HomeChart) => void;
   // Replaces everything with a restored backup.
   restore: (state: SavedState) => void;
   resetAll: () => void;
@@ -41,6 +43,7 @@ const empty = (): SavedState => ({
   onboarded: false,
   paidBills: [],
   reminders: 'day-before',
+  homeChart: 'pace',
   incomes: [],
   envelopes: [],
   expenses: [],
@@ -146,6 +149,7 @@ export const useBudget = create<BudgetState>()(
         }),
 
       setReminders: (reminders) => set({ reminders }),
+      setHomeChart: (homeChart) => set({ homeChart }),
 
       restore: (state) => set({ ...empty(), ...state }),
 
@@ -162,7 +166,13 @@ export const useBudget = create<BudgetState>()(
 
 // Everything that gets saved, without the actions. Used for backups.
 export function selectSaved(s: BudgetState): SavedState {
-  return { ...selectData(s), onboarded: s.onboarded, paidBills: s.paidBills, reminders: s.reminders };
+  return {
+    ...selectData(s),
+    onboarded: s.onboarded,
+    paidBills: s.paidBills,
+    reminders: s.reminders,
+    homeChart: s.homeChart,
+  };
 }
 
 // Everything the budget math needs, without the actions.

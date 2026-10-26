@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { SpendLineChart } from '@/components/charts';
+import { HomeDisplay } from '@/components/HomeDisplay';
 import { Fab } from '@/components/Fab';
 import {
   digits,
@@ -55,7 +55,7 @@ export default function HomeScreen() {
       unpaid: due.filter((o) => !paid.has(billKey(o.bill.id, o.date))).reduce((t, o) => t + o.bill.amount, 0),
     };
   }, [bills, paidBills, month]);
-  const daysLeft = daysInMonth(month) - todayDay;
+  const homeChart = useBudget((s) => s.homeChart);
 
   return (
     <View style={styles.screen}>
@@ -67,20 +67,14 @@ export default function HomeScreen() {
 
         <Pressable onPress={() => router.push('/spending')} accessibilityRole="button" accessibilityLabel="Spending details">
           <Display>
-            <DisplayLabel>{totalAvailable < 0 ? 'Over budget' : 'Left to spend'}</DisplayLabel>
-            <DisplayDigits>{digits(totalAvailable)}</DisplayDigits>
-            <DisplayNote>
-              {pace.ahead > 0 ? `${digits(pace.ahead)} AHEAD OF PACE` : `${digits(-pace.ahead)} UNDER PACE`}
-              {` · ${daysLeft} ${daysLeft === 1 ? 'DAY' : 'DAYS'} LEFT`}
-            </DisplayNote>
-            <SpendLineChart
+            <HomeDisplay
+              chart={homeChart}
+              totalAvailable={totalAvailable}
+              pace={pace}
               points={points}
-              budget={pace.budget}
-              days={daysInMonth(month)}
               month={month}
-              height={80}
-              interactive={false}
-              onDisplay
+              todayDay={todayDay}
+              fixedTotal={fixed.total}
             />
           </Display>
         </Pressable>

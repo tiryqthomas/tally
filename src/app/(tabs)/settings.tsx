@@ -7,6 +7,7 @@ import { Button, Card, Chips, Field, SectionTitle, styles } from '@/components/u
 import { incomeFor } from '@/lib/budget';
 import { currentMonth } from '@/lib/dates';
 import { exportBackup, pickBackup } from '@/lib/backupFile';
+import { HOME_CHART_OPTIONS } from '@/lib/homeCharts';
 import { REMINDER_OPTIONS } from '@/lib/reminderPlan';
 import { reminderPermission, sendTestReminder, type ReminderPermission } from '@/lib/reminders';
 import { selectSaved, useBudget } from '@/lib/store';
@@ -15,7 +16,8 @@ export default function SettingsScreen() {
   const income = incomeFor(useBudget((s) => s.incomes), currentMonth());
   const accounts = useBudget((s) => s.accounts);
   const reminders = useBudget((s) => s.reminders);
-  const { setIncome, addAccount, deleteAccount, resetAll, setReminders, restore } = useBudget.getState();
+  const homeChart = useBudget((s) => s.homeChart);
+  const { setIncome, addAccount, deleteAccount, resetAll, setReminders, setHomeChart, restore } = useBudget.getState();
   const [permission, setPermission] = useState<ReminderPermission>('undetermined');
   useEffect(() => {
     reminderPermission().then(setPermission);
@@ -90,6 +92,12 @@ export default function SettingsScreen() {
       <SectionTitle>Monthly income</SectionTitle>
       <IncomeForm draft={draft} onChange={setDraft} />
       <Button title="Save income" onPress={saveIncome} disabled={!parsed} />
+
+      <SectionTitle>Home chart</SectionTitle>
+      <Chips options={HOME_CHART_OPTIONS} value={homeChart} onChange={setHomeChart} />
+      <Text style={[styles.muted, { marginBottom: spacing.md }]}>
+        {HOME_CHART_OPTIONS.find((o) => o.value === homeChart)?.detail}
+      </Text>
 
       <SectionTitle>Accounts bills come out of</SectionTitle>
       {accounts.map((a) => (

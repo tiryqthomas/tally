@@ -1,3 +1,4 @@
+import type { HomeChart } from './homeCharts';
 import type { ReminderSetting } from './reminderPlan';
 import type { BudgetData, Income, Month } from './types';
 
@@ -6,6 +7,8 @@ export interface SavedState extends BudgetData {
   onboarded: boolean;
   paidBills: string[];
   reminders: ReminderSetting;
+  // Which chart the display at the top of Home shows.
+  homeChart: HomeChart;
 }
 
 export const STATE_VERSION = 2;
@@ -21,6 +24,7 @@ export function migrateState(state: Record<string, unknown>, version: number): S
   }
   s.paidBills ??= [];
   s.reminders ??= 'day-before';
+  s.homeChart ??= 'pace';
   return s as unknown as SavedState;
 }
 
