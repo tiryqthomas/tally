@@ -41,7 +41,7 @@ export default function NewEnvelope() {
           instead of {formatMoney(savings.limit)}.
         </Text>
       )}
-      <Button title="Create envelope" onPress={save} />
+      <Button title="Create category" onPress={save} />
 
       <SectionTitle>Suggestions</SectionTitle>
       <PresetPicker taken={[...taken, name]} onPick={setName} />

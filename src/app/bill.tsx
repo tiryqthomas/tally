@@ -37,7 +37,7 @@ export default function BillScreen() {
   function save() {
     const cents = parseMoney(amount);
     if (!name.trim() || !cents || !envelopeId) {
-      Alert.alert('Add a name, an amount and an envelope.');
+      Alert.alert('Add a name, an amount and a category.');
       return;
     }
     saveBill({ id: existing?.id, name: name.trim(), amount: cents, frequency, startDate: date, envelopeId, accountId });
@@ -72,7 +72,7 @@ export default function BillScreen() {
         <SectionTitle>{existing ? 'First due date' : 'Next due date'}</SectionTitle>
         <MonthCalendar month={calendarMonth} onChangeMonth={setCalendarMonth} selected={date} onSelect={setDate} />
 
-        <SectionTitle>Paid from envelope</SectionTitle>
+        <SectionTitle>Paid from category</SectionTitle>
         <Chips options={envelopes.map((e) => ({ value: e.id, label: e.name }))} value={envelopeId} onChange={setEnvelopeId} />
 
         <SectionTitle>Comes out of account</SectionTitle>

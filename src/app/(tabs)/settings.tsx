@@ -79,7 +79,7 @@ export default function SettingsScreen() {
   }
 
   function confirmReset() {
-    Alert.alert('Erase everything?', 'All envelopes, spending and bills on this phone will be deleted. This cannot be undone.', [
+    Alert.alert('Erase everything?', 'All categories, spending and bills on this phone will be deleted. This cannot be undone.', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Erase', style: 'destructive', onPress: resetAll },
     ]);

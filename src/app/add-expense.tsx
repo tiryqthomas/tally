@@ -1,14 +1,14 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { digits as asDigits, Display, DisplayDigits, DisplayLabel, DisplayNote, Key } from '@/components/machine';
 import { colors, fonts, spacing } from '@/components/theme';
-import { Button, Chips, Field, SectionTitle, styles as ui } from '@/components/ui';
+import { Button, Card, Chips, Field, SectionTitle, styles as ui } from '@/components/ui';
 import { summarizeMonth } from '@/lib/budget';
 import { currentMonth, monthOf, shortDateLabel, toDateString, today } from '@/lib/dates';
 import { useMonthSummary } from '@/lib/hooks';
-import { formatMoney } from '@/lib/money';
+import { formatMoney, parseMoney } from '@/lib/money';
 import { selectData, useBudget } from '@/lib/store';
 
 // Laid out like an adding machine, 7-8-9 on top.
@@ -28,6 +28,10 @@ export default function AddExpense() {
   const [digits, setDigits] = useState(existing ? (existing.amount / 100).toFixed(2) : '');
   const [note, setNote] = useState(existing?.note ?? '');
   const [day, setDay] = useState<DayChoice>('today');
+  // The inline form for adding a category without leaving this screen.
+  const [adding, setAdding] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newLimit, setNewLimit] = useState('');
 
   const cents = digits ? Math.round(Number(digits) * 100) : 0;
 
@@ -64,6 +68,16 @@ export default function AddExpense() {
     );
   }
 
+  function addCategory() {
+    const name = newName.trim();
+    const limit = parseMoney(newLimit);
+    if (!name || limit === null) return;
+    setEnvelopeId(useBudget.getState().addEnvelope(name, limit));
+    setAdding(false);
+    setNewName('');
+    setNewLimit('');
+  }
+
   function remove() {
     if (!existing) return;
     const done = () => {
@@ -83,12 +97,44 @@ export default function AddExpense() {
   return (
     <ScrollView style={ui.screen} contentContainerStyle={{ padding: spacing.md }} keyboardShouldPersistTaps="handled">
       {existing && <Stack.Screen options={{ title: 'Edit spending' }} />}
-      <SectionTitle>Envelope</SectionTitle>
+      <SectionTitle>Category</SectionTitle>
       <Chips
         options={summary.envelopes.map((e) => ({ value: e.envelope.id, label: e.envelope.name }))}
         value={envelopeId}
         onChange={setEnvelopeId}
+        // New categories start this month, so they can't hold an older expense being edited.
+        trailing={
+          !existing && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Add a category"
+              accessibilityState={{ expanded: adding }}
+              onPress={() => setAdding((a) => !a)}
+              style={[ui.chip, adding && ui.chipSelected]}
+            >
+              <Text style={[ui.chipText, adding && ui.chipTextSelected]}>{adding ? '×' : '+'}</Text>
+            </Pressable>
+          )
+        }
       />
+      {adding && (
+        <Card>
+          <Field label="New category" value={newName} onChangeText={setNewName} placeholder="e.g. Pets" autoFocus />
+          <Field
+            label="Monthly limit ($)"
+            value={newLimit}
+            onChangeText={setNewLimit}
+            keyboardType="decimal-pad"
+            placeholder="0.00"
+          />
+          <Button
+            title="Add category"
+            variant="secondary"
+            onPress={addCategory}
+            disabled={!newName.trim() || parseMoney(newLimit) === null}
+          />
+        </Card>
+      )}
 
       <Display style={{ marginVertical: spacing.md }}>
         <DisplayLabel>{selected ? selected.envelope.name : 'Amount'}</DisplayLabel>
@@ -96,9 +142,7 @@ export default function AddExpense() {
           <DisplayDigits size={48}>{digits || '0.'}</DisplayDigits>
         </View>
         <DisplayNote>
-          {selected && !existing
-            ? `${asDigits(selected.available)} LEFT · ${asDigits(selected.available - cents)} AFTER`
-            : ' '}
+          {selected && !existing ? `${asDigits(selected.available)} LEFT · ${asDigits(selected.available - cents)} AFTER` : ' '}
         </DisplayNote>
       </Display>
 

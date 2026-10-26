@@ -15,7 +15,8 @@ interface BudgetState extends SavedState {
   setIncome: (income: Income) => void;
   // The Savings / Discretionary envelope is created automatically.
   finishOnboarding: (income: Income, envelopes: { name: string; limit: number }[]) => void;
-  addEnvelope: (name: string, limit: number) => void;
+  // Returns the new envelope's id.
+  addEnvelope: (name: string, limit: number) => string;
   renameEnvelope: (id: string, name: string) => void;
   // Changes the limit from the current month onward.
   setEnvelopeLimit: (id: string, limit: number) => void;
@@ -81,8 +82,11 @@ export const useBudget = create<BudgetState>()(
           ],
         }),
 
-      addEnvelope: (name, limit) =>
-        set((s) => ({ envelopes: [...s.envelopes, makeEnvelope(name, limit)] })),
+      addEnvelope: (name, limit) => {
+        const envelope = makeEnvelope(name, limit);
+        set((s) => ({ envelopes: [...s.envelopes, envelope] }));
+        return envelope.id;
+      },
 
       renameEnvelope: (id, name) =>
         set((s) => ({ envelopes: s.envelopes.map((e) => (e.id === id ? { ...e, name } : e)) })),

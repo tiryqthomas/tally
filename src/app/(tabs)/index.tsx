@@ -93,7 +93,7 @@ export default function HomeScreen() {
         {summary.overAssigned > 0 && (
           <Card style={local.alert}>
             <Text style={styles.body}>
-              Your envelope limits are {formatMoney(summary.overAssigned)} more than your income, so{' '}
+              Your category limits are {formatMoney(summary.overAssigned)} more than your income, so{' '}
               {savings?.envelope.name ?? 'savings'} started this month below zero. Lower a limit to fix it.
             </Text>
           </Card>
@@ -129,7 +129,7 @@ export default function HomeScreen() {
           </Card>
         )}
 
-        <SectionTitle>Envelopes</SectionTitle>
+        <SectionTitle>Categories</SectionTitle>
         <PaperTape>
           {others.map((e) => (
             <TapeRow key={e.envelope.id} row={e} onPress={() => router.push(`/envelope/${e.envelope.id}`)} />
@@ -142,7 +142,7 @@ export default function HomeScreen() {
           </View>
         </PaperTape>
         <Pressable onPress={() => router.push('/new-envelope')} style={{ paddingVertical: spacing.sm }} accessibilityRole="button">
-          <Text style={local.add}>+ ADD ENVELOPE</Text>
+          <Text style={local.add}>+ ADD CATEGORY</Text>
         </Pressable>
 
         {savings && (
@@ -152,7 +152,7 @@ export default function HomeScreen() {
               <TapeRow row={savings} onPress={() => router.push(`/envelope/${savings.envelope.id}`)} />
             </PaperTape>
             <Text style={styles.muted}>
-              Gets whatever income your other envelopes don't use, covers any envelope that runs out, and carries its
+              Gets whatever income your other categories don't use, covers any category that runs out, and carries its
               balance month to month.
             </Text>
           </>

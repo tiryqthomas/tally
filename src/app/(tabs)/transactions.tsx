@@ -39,7 +39,7 @@ export default function TransactionsScreen() {
   const [filter, setFilter] = useState<Filter>('all');
 
   const rows = useMemo(() => {
-    const envelopeName = (id?: string) => envelopes.find((e) => e.id === id)?.name ?? 'No envelope';
+    const envelopeName = (id?: string) => envelopes.find((e) => e.id === id)?.name ?? 'No category';
     const paid = new Set(paidBills);
     const todayDate = today();
     const spending: Row[] = expensesIn(expenses, month).map((x) => ({

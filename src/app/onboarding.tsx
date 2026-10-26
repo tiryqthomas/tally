@@ -53,7 +53,7 @@ export default function Onboarding() {
         {step === 'income' ? (
           <>
             <Text style={[styles.body, { marginBottom: spacing.lg }]}>
-              Budget like you're holding cash. Every dollar goes in an envelope, and you log every purchase by hand.
+              Budget like you're holding cash. Every dollar goes in a category, and you log every purchase by hand.
               {'\n\n'}First, how much do you bring home each month?
             </Text>
             <IncomeForm draft={draft} onChange={setDraft} />
@@ -63,17 +63,17 @@ export default function Onboarding() {
           <>
             <Text style={[styles.body, { marginBottom: spacing.md }]}>
               Set a monthly limit for each envelope. Whatever is left goes into {SAVINGS_NAME} automatically, and it
-              builds up month to month. Bills like rent come out of an envelope, so make sure its limit covers them.
+              builds up month to month. Bills like rent come out of a category, so make sure its limit covers them.
             </Text>
 
-            <SectionTitle>Envelopes</SectionTitle>
+            <SectionTitle>Categories</SectionTitle>
             {envelopes.map((e) => (
               <Card key={e.key}>
                 <View style={{ flexDirection: 'row', gap: spacing.sm, alignItems: 'center' }}>
                   <TextInput
                     value={e.name}
                     onChangeText={(name) => update(e.key, { name })}
-                    placeholder="Envelope name"
+                    placeholder="Category name"
                     style={[styles.input, { flex: 1, minWidth: 0 }]}
                     placeholderTextColor={colors.muted}
                   />
@@ -117,7 +117,7 @@ export default function Onboarding() {
               <Text style={[styles.muted, { marginTop: spacing.xs }]}>
                 {leftover < 0
                   ? `Your limits are ${formatMoney(-leftover)} more than your income, so this would start each month below zero.`
-                  : 'What your income leaves after the limits above. If another envelope runs out, the difference comes out of this one.'}
+                  : 'What your income leaves after the limits above. If another category runs out, the difference comes out of this one.'}
               </Text>
             </Card>
 
