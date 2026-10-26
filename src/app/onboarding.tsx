@@ -4,36 +4,34 @@ import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { IncomeForm, incomeFromDraft, type IncomeDraft } from '@/components/IncomeForm';
+import { PresetPicker } from '@/components/PresetPicker';
 import { colors, spacing } from '@/components/theme';
 import { Button, Card, SectionTitle, styles } from '@/components/ui';
 import { monthlyIncome } from '@/lib/budget';
 import { formatMoney, parseMoney } from '@/lib/money';
-import { useBudget } from '@/lib/store';
+import { STARTER_ENVELOPES } from '@/lib/presets';
+import { SAVINGS_NAME, useBudget } from '@/lib/store';
 
 interface EnvelopeDraft {
   key: number;
   name: string;
   limit: string;
-  isSavings: boolean;
 }
 
-const STARTERS: EnvelopeDraft[] = [
-  { key: 1, name: 'Rent', limit: '', isSavings: false },
-  { key: 2, name: 'Groceries', limit: '', isSavings: false },
-  { key: 3, name: 'Gas', limit: '', isSavings: false },
-  { key: 4, name: 'Savings / Discretionary', limit: '', isSavings: true },
-];
+let nextKey = 1;
+const draftEnvelope = (name: string): EnvelopeDraft => ({ key: nextKey++, name, limit: '' });
 
 export default function Onboarding() {
   const router = useRouter();
   const finishOnboarding = useBudget((s) => s.finishOnboarding);
   const [step, setStep] = useState<'income' | 'envelopes'>('income');
   const [draft, setDraft] = useState<IncomeDraft>({ mode: 'salary', monthly: '', hourlyRate: '', hoursPerWeek: '40' });
-  const [envelopes, setEnvelopes] = useState(STARTERS);
+  const [envelopes, setEnvelopes] = useState(() => STARTER_ENVELOPES.map(draftEnvelope));
+  const [showPresets, setShowPresets] = useState(false);
 
   const income = incomeFromDraft(draft);
   const assigned = envelopes.reduce((t, e) => t + (parseMoney(e.limit) ?? 0), 0);
-  const unassigned = income ? monthlyIncome(income) - assigned : 0;
+  const leftover = income ? monthlyIncome(income) - assigned : 0;
   const named = envelopes.filter((e) => e.name.trim());
 
   const update = (key: number, changes: Partial<EnvelopeDraft>) =>
@@ -43,7 +41,7 @@ export default function Onboarding() {
     if (!income) return;
     finishOnboarding(
       income,
-      named.map((e) => ({ name: e.name.trim(), limit: parseMoney(e.limit) ?? 0, isSavings: e.isSavings })),
+      named.map((e) => ({ name: e.name.trim(), limit: parseMoney(e.limit) ?? 0 })),
     );
     router.replace('/');
   }
@@ -64,16 +62,9 @@ export default function Onboarding() {
         ) : (
           <>
             <Text style={[styles.body, { marginBottom: spacing.md }]}>
-              Now split your income into envelopes. Set a monthly limit for each. Bills like rent come out of an envelope,
-              so make sure its limit covers them. You can add bills on the Bills tab next.
+              Set a monthly limit for each envelope. Whatever is left goes into {SAVINGS_NAME} automatically, and it
+              builds up month to month. Bills like rent come out of an envelope, so make sure its limit covers them.
             </Text>
-            <Card style={{ backgroundColor: unassigned < 0 ? colors.dangerSoft : colors.accentSoft }}>
-              <Text style={styles.body}>
-                {unassigned >= 0
-                  ? `${formatMoney(unassigned)} left to assign`
-                  : `${formatMoney(-unassigned)} more than your income`}
-              </Text>
-            </Card>
 
             <SectionTitle>Envelopes</SectionTitle>
             {envelopes.map((e) => (
@@ -83,7 +74,6 @@ export default function Onboarding() {
                     value={e.name}
                     onChangeText={(name) => update(e.key, { name })}
                     placeholder="Envelope name"
-                    editable={!e.isSavings}
                     style={[styles.input, { flex: 1, minWidth: 0 }]}
                     placeholderTextColor={colors.muted}
                   />
@@ -96,32 +86,45 @@ export default function Onboarding() {
                     placeholderTextColor={colors.muted}
                   />
                 </View>
-                {e.isSavings ? (
-                  <Text style={[styles.muted, { marginTop: spacing.xs }]}>
-                    Required. If another envelope runs out, the difference comes out of this one.
-                  </Text>
-                ) : (
-                  <Pressable onPress={() => setEnvelopes((list) => list.filter((x) => x.key !== e.key))}>
-                    <Text style={[styles.muted, { marginTop: spacing.xs, color: colors.danger }]}>Remove</Text>
-                  </Pressable>
-                )}
+                <Pressable onPress={() => setEnvelopes((list) => list.filter((x) => x.key !== e.key))}>
+                  <Text style={[styles.muted, { marginTop: spacing.xs, color: colors.danger }]}>Remove</Text>
+                </Pressable>
               </Card>
             ))}
-            <Pressable
-              onPress={() =>
-                setEnvelopes((list) => [
-                  ...list.slice(0, -1),
-                  { key: Date.now(), name: '', limit: '', isSavings: false },
-                  list[list.length - 1],
-                ])
-              }
-              style={{ paddingVertical: spacing.sm, marginBottom: spacing.md }}
-            >
-              <Text style={{ color: colors.accent, fontWeight: '600' }}>+ Add envelope</Text>
-            </Pressable>
 
-            <Button title="Start budgeting" onPress={finish} disabled={named.length < 2} />
-            <Button title="Back" variant="secondary" onPress={() => setStep('income')} />
+            <View style={{ flexDirection: 'row', gap: spacing.lg, paddingVertical: spacing.sm }}>
+              <Pressable onPress={() => setShowPresets((v) => !v)}>
+                <Text style={{ color: colors.accent, fontWeight: '600' }}>
+                  {showPresets ? 'Hide suggestions' : '+ Add from suggestions'}
+                </Text>
+              </Pressable>
+              <Pressable onPress={() => setEnvelopes((list) => [...list, draftEnvelope('')])}>
+                <Text style={{ color: colors.accent, fontWeight: '600' }}>+ Custom</Text>
+              </Pressable>
+            </View>
+            {showPresets && (
+              <PresetPicker
+                taken={envelopes.map((e) => e.name)}
+                onPick={(name) => setEnvelopes((list) => [...list, draftEnvelope(name)])}
+              />
+            )}
+
+            <Card style={{ marginTop: spacing.md, backgroundColor: leftover < 0 ? colors.dangerSoft : colors.accentSoft }}>
+              <View style={styles.row}>
+                <Text style={styles.title}>{SAVINGS_NAME}</Text>
+                <Text style={[styles.title, leftover < 0 && { color: colors.danger }]}>{formatMoney(leftover)}</Text>
+              </View>
+              <Text style={[styles.muted, { marginTop: spacing.xs }]}>
+                {leftover < 0
+                  ? `Your limits are ${formatMoney(-leftover)} more than your income, so this would start each month below zero.`
+                  : 'What your income leaves after the limits above. If another envelope runs out, the difference comes out of this one.'}
+              </Text>
+            </Card>
+
+            <View style={{ marginTop: spacing.md }}>
+              <Button title="Start budgeting" onPress={finish} disabled={named.length < 1} />
+              <Button title="Back" variant="secondary" onPress={() => setStep('income')} />
+            </View>
           </>
         )}
       </ScrollView>

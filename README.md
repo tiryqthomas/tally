@@ -22,10 +22,11 @@ Built with Expo (SDK 58), Expo Router, and Zustand. All data stays on the phone 
 The rules live in `src/lib/budget.ts` and are covered by tests (`npm test`).
 
 - Each envelope's available balance = monthly limit + last month's leftover + money moved in − money moved out − bills set aside − spending.
+- Savings / Discretionary gets whatever income the other envelopes' limits leave, and its balance carries month to month as a running savings total.
 - Every bill due in a month is set aside from its envelope on the 1st.
 - If any envelope goes below zero, the shortfall is pulled from Savings / Discretionary automatically. Only that envelope can go negative.
 - Leftover money rolls into the same envelope next month, and so does a negative Savings / Discretionary balance.
-- Income is one monthly number. Hourly pay is estimated as rate × hours per week × 52 ÷ 12.
+- Income is one monthly number, and a change applies from the current month on. Hourly pay is estimated as rate × hours per week × 52 ÷ 12.
 - The budget month always starts on the 1st.
 
 ## Project layout

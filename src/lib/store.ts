@@ -3,14 +3,16 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
 import { currentMonth, today } from './dates';
-import type { Account, Bill, BudgetData, Envelope, Expense, Income, Transfer } from './types';
+import type { Account, Bill, BudgetData, Envelope, Expense, Income, Month, Transfer } from './types';
 
 const newId = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
 
 interface BudgetState extends BudgetData {
   onboarded: boolean;
+  // Changes income from the current month onward.
   setIncome: (income: Income) => void;
-  finishOnboarding: (income: Income, envelopes: { name: string; limit: number; isSavings: boolean }[]) => void;
+  // The Savings / Discretionary envelope is created automatically.
+  finishOnboarding: (income: Income, envelopes: { name: string; limit: number }[]) => void;
   addEnvelope: (name: string, limit: number) => void;
   renameEnvelope: (id: string, name: string) => void;
   // Changes the limit from the current month onward.
@@ -29,7 +31,7 @@ interface BudgetState extends BudgetData {
 
 const empty = (): BudgetData & { onboarded: boolean } => ({
   onboarded: false,
-  income: { mode: 'salary', monthly: 0 },
+  incomes: [],
   envelopes: [],
   expenses: [],
   bills: [],
@@ -37,6 +39,8 @@ const empty = (): BudgetData & { onboarded: boolean } => ({
   accounts: [],
   startMonth: currentMonth(),
 });
+
+export const SAVINGS_NAME = 'Savings / Discretionary';
 
 const makeEnvelope = (name: string, limit: number, isSavings = false): Envelope => ({
   id: newId(),
@@ -51,14 +55,21 @@ export const useBudget = create<BudgetState>()(
     (set) => ({
       ...empty(),
 
-      setIncome: (income) => set({ income }),
+      setIncome: (income) =>
+        set((s) => {
+          const fromMonth = currentMonth();
+          return { incomes: [...s.incomes.filter((i) => i.fromMonth !== fromMonth), { fromMonth, income }] };
+        }),
 
       finishOnboarding: (income, envelopes) =>
         set({
           onboarded: true,
-          income,
+          incomes: [{ fromMonth: currentMonth(), income }],
           startMonth: currentMonth(),
-          envelopes: envelopes.map((e) => makeEnvelope(e.name, e.limit, e.isSavings)),
+          envelopes: [
+            ...envelopes.map((e) => makeEnvelope(e.name, e.limit)),
+            makeEnvelope(SAVINGS_NAME, 0, true),
+          ],
         }),
 
       addEnvelope: (name, limit) =>
@@ -117,8 +128,17 @@ export const useBudget = create<BudgetState>()(
     }),
     {
       name: 'tally-budget',
-      version: 1,
+      version: 2,
       storage: createJSONStorage(() => Storage),
+      migrate: (persisted, version) => {
+        const state = persisted as Record<string, unknown>;
+        // v1 kept a single income; v2 keeps a history of income changes.
+        if (version < 2 && state.income) {
+          state.incomes = [{ fromMonth: state.startMonth as Month, income: state.income as Income }];
+          delete state.income;
+        }
+        return state as unknown as BudgetState;
+      },
     },
   ),
 );
@@ -126,7 +146,7 @@ export const useBudget = create<BudgetState>()(
 // Everything the budget math needs, without the actions.
 export function selectData(s: BudgetState): BudgetData {
   return {
-    income: s.income,
+    incomes: s.incomes,
     envelopes: s.envelopes,
     expenses: s.expenses,
     bills: s.bills,

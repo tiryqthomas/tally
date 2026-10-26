@@ -24,12 +24,11 @@ export default function HomeScreen() {
         <Text style={styles.muted}>{monthLabel(month)} · left to spend</Text>
         <Text style={[styles.big, totalAvailable < 0 && { color: colors.danger }]}>{formatMoney(totalAvailable)}</Text>
 
-        {summary.unassigned !== 0 && (
-          <Card style={{ marginTop: spacing.md, backgroundColor: summary.unassigned > 0 ? colors.accentSoft : colors.dangerSoft }}>
+        {summary.overAssigned > 0 && (
+          <Card style={{ marginTop: spacing.md, backgroundColor: colors.dangerSoft }}>
             <Text style={styles.body}>
-              {summary.unassigned > 0
-                ? `${formatMoney(summary.unassigned)} of income isn't in an envelope yet. Give every dollar a job.`
-                : `Your envelope limits are ${formatMoney(-summary.unassigned)} more than your income.`}
+              Your envelope limits are {formatMoney(summary.overAssigned)} more than your income, so{' '}
+              {savings?.envelope.name ?? 'savings'} started this month below zero. Lower a limit to fix it.
             </Text>
           </Card>
         )}
@@ -61,8 +60,12 @@ export default function HomeScreen() {
 
         {savings && (
           <>
-            <SectionTitle>Covers overspending</SectionTitle>
+            <SectionTitle>Savings</SectionTitle>
             <EnvelopeRow row={savings} onPress={() => router.push(`/envelope/${savings.envelope.id}`)} />
+            <Text style={styles.muted}>
+              Gets whatever income your other envelopes don't use, covers any envelope that runs out, and carries its
+              balance month to month.
+            </Text>
           </>
         )}
       </ScrollView>
@@ -73,7 +76,8 @@ export default function HomeScreen() {
 
 function EnvelopeRow({ row, onPress }: { row: EnvelopeMonth; onPress: () => void }) {
   const budget = row.limit + row.rollover + row.transfersIn - row.transfersOut;
-  const used = row.spent + row.billsSetAside;
+  // Includes money the savings envelope handed to other envelopes.
+  const used = budget - row.available;
   const negative = row.available < 0;
   // Red only when money ran out, not when bills used the envelope exactly as planned.
   const overspent = row.coveredBySavings > 0;
@@ -88,8 +92,9 @@ function EnvelopeRow({ row, onPress }: { row: EnvelopeMonth; onPress: () => void
           <ProgressBar fraction={budget > 0 ? used / budget : negative ? 1 : 0} danger={negative || overspent} />
         </View>
         <Text style={styles.muted}>
-          {formatMoney(row.spent)} spent
-          {row.billsSetAside > 0 ? ` · ${formatMoney(row.billsSetAside)} for bills` : ''} · of {formatMoney(budget)}
+          {row.envelope.isSavings
+            ? `${formatMoney(row.limit)} added this month · ${formatMoney(row.rollover)} carried over`
+            : `${formatMoney(row.spent)} spent${row.billsSetAside > 0 ? ` · ${formatMoney(row.billsSetAside)} for bills` : ''} · of ${formatMoney(budget)}`}
         </Text>
       </Card>
     </Pressable>

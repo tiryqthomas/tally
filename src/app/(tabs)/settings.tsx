@@ -4,10 +4,12 @@ import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { draftFromIncome, IncomeForm, incomeFromDraft } from '@/components/IncomeForm';
 import { colors, spacing } from '@/components/theme';
 import { Button, Card, Field, SectionTitle, styles } from '@/components/ui';
+import { incomeFor } from '@/lib/budget';
+import { currentMonth } from '@/lib/dates';
 import { useBudget } from '@/lib/store';
 
 export default function SettingsScreen() {
-  const income = useBudget((s) => s.income);
+  const income = incomeFor(useBudget((s) => s.incomes), currentMonth());
   const accounts = useBudget((s) => s.accounts);
   const { setIncome, addAccount, deleteAccount, resetAll } = useBudget.getState();
 
@@ -18,7 +20,7 @@ export default function SettingsScreen() {
   function saveIncome() {
     if (!parsed) return;
     setIncome(parsed);
-    Alert.alert('Income updated');
+    Alert.alert('Income updated', 'The new amount applies from this month on. Past months keep the old amount.');
   }
 
   function confirmReset() {

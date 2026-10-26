@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { billDueDates, limitFor, summarizeMonth } from './budget';
+import { billDueDates, limitFor, summarizeMonth, summarizeMonths } from './budget';
 import { estimateMonthlyFromHourly, formatMoney, parseMoney } from './money';
 import type { Bill, BudgetData, Envelope } from './types';
 
@@ -12,8 +12,9 @@ const env = (id: string, limit: number, isSavings = false): Envelope => ({
 });
 
 const base = (): BudgetData => ({
-  income: { mode: 'salary', monthly: 300000 },
-  envelopes: [env('rent', 120000), env('groceries', 40000), env('savings', 50000, true)],
+  incomes: [{ fromMonth: '2026-11', income: { mode: 'salary', monthly: 300000 } }],
+  // Savings gets the rest of the $3,000: $3,000 - $1,200 - $400 = $1,400.
+  envelopes: [env('rent', 120000), env('groceries', 40000), env('savings', 0, true)],
   expenses: [],
   bills: [],
   transfers: [],
@@ -99,18 +100,18 @@ describe('summarizeMonth', () => {
     const summary = summarizeMonth(data, '2026-11');
     expect(row(data, '2026-11', 'groceries').available).toBe(0);
     expect(row(data, '2026-11', 'groceries').coveredBySavings).toBe(5000);
-    expect(row(data, '2026-11', 'savings').available).toBe(45000);
+    expect(row(data, '2026-11', 'savings').available).toBe(135000);
     expect(summary.totalCovered).toBe(5000);
   });
 
   test('leftover rolls over, including negative savings', () => {
     const data = base();
     data.expenses.push({ id: 'e1', envelopeId: 'groceries', amount: 10000, date: '2026-11-10' });
-    data.expenses.push({ id: 'e2', envelopeId: 'savings', amount: 60000, date: '2026-11-11' });
+    data.expenses.push({ id: 'e2', envelopeId: 'savings', amount: 160000, date: '2026-11-11' });
     expect(row(data, '2026-12', 'groceries').rollover).toBe(30000);
     expect(row(data, '2026-12', 'groceries').available).toBe(70000);
-    expect(row(data, '2026-12', 'savings').rollover).toBe(-10000);
-    expect(row(data, '2026-12', 'savings').available).toBe(40000);
+    expect(row(data, '2026-12', 'savings').rollover).toBe(-20000);
+    expect(row(data, '2026-12', 'savings').available).toBe(120000);
   });
 
   test('limit changes only apply from their month on', () => {
@@ -124,10 +125,33 @@ describe('summarizeMonth', () => {
     const data = base();
     data.transfers.push({ id: 't', fromEnvelopeId: 'savings', toEnvelopeId: 'groceries', amount: 2500, month: '2026-11' });
     expect(row(data, '2026-11', 'groceries').available).toBe(42500);
-    expect(row(data, '2026-11', 'savings').available).toBe(47500);
+    expect(row(data, '2026-11', 'savings').available).toBe(137500);
   });
 
-  test('unassigned income is income minus limits', () => {
-    expect(summarizeMonth(base(), '2026-11').unassigned).toBe(300000 - 210000);
+  test('savings gets whatever income the other envelopes leave', () => {
+    const summary = summarizeMonth(base(), '2026-11');
+    expect(row(base(), '2026-11', 'savings').limit).toBe(140000);
+    expect(summary.overAssigned).toBe(0);
+  });
+
+  test('limits above income start savings below zero', () => {
+    const data = base();
+    data.envelopes[0].limits[0].amount = 280000;
+    expect(row(data, '2026-11', 'savings').limit).toBe(-20000);
+    expect(summarizeMonth(data, '2026-11').overAssigned).toBe(20000);
+  });
+
+  test('savings keeps a running balance across months', () => {
+    const data = base();
+    data.expenses.push({ id: 'e', envelopeId: 'savings', amount: 40000, date: '2026-11-03' });
+    const months = summarizeMonths(data, '2027-01').map((m) => row(data, m.month, 'savings').available);
+    expect(months).toEqual([100000, 240000, 380000]);
+  });
+
+  test('an income change applies from its month on', () => {
+    const data = base();
+    data.incomes.push({ fromMonth: '2026-12', income: { mode: 'salary', monthly: 350000 } });
+    expect(row(data, '2026-11', 'savings').limit).toBe(140000);
+    expect(row(data, '2026-12', 'savings').limit).toBe(190000);
   });
 });
