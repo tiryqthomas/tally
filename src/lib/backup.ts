@@ -1,5 +1,5 @@
 import type { HomeChart } from './homeCharts';
-import type { ReminderSetting } from './reminderPlan';
+import { toReminderSetting, type ReminderSetting } from './reminderPlan';
 import type { BudgetData, Income, Month } from './types';
 
 // Everything a backup file holds. Matches the saved app state.
@@ -11,7 +11,7 @@ export interface SavedState extends BudgetData {
   homeChart: HomeChart;
 }
 
-export const STATE_VERSION = 2;
+export const STATE_VERSION = 3;
 
 // Brings state saved by an older version of the app up to date.
 // Used both when loading from the phone and when restoring a backup.
@@ -23,7 +23,8 @@ export function migrateState(state: Record<string, unknown>, version: number): S
     delete s.income;
   }
   s.paidBills ??= [];
-  s.reminders ??= 'day-before';
+  // v3 allows several reminders per bill, so the one saved timing becomes a list.
+  s.reminders = toReminderSetting(s.reminders);
   s.homeChart ??= 'pace';
   return s as unknown as SavedState;
 }

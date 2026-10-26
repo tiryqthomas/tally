@@ -9,9 +9,6 @@ import { Fab } from '@/components/Fab';
 import {
   digits,
   Display,
-  DisplayDigits,
-  DisplayLabel,
-  DisplayNote,
   Key,
   KeyLabel,
   keyColors,
@@ -20,18 +17,17 @@ import {
 } from '@/components/machine';
 import { colors, fonts, machine, spacing } from '@/components/theme';
 import { Card, SectionTitle, styles } from '@/components/ui';
-import { billsBetween, dailySpending, nextSevenDays, spendingPace } from '@/lib/analysis';
+import { billsBetween, nextSevenDays } from '@/lib/analysis';
 import { billKey, billsInMonth, billStatus, type EnvelopeMonth } from '@/lib/budget';
-import { currentMonth, daysInMonth, monthLabel, shortDateLabel, today, weekdayOf } from '@/lib/dates';
-import { useBudgetData, useMonthSummary } from '@/lib/hooks';
+import { monthLabel, shortDateLabel, today, weekdayOf } from '@/lib/dates';
+import { useHomeNumbers } from '@/lib/hooks';
 import { formatMoney } from '@/lib/money';
 import { useBudget } from '@/lib/store';
 
 export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const month = currentMonth();
-  const summary = useMonthSummary(month);
+  const { month, summary, todayDay, totalAvailable, pace, points, fixed } = useHomeNumbers();
   const savings = summary.envelopes.find((e) => e.envelope.isSavings);
   const others = summary.envelopes.filter((e) => !e.envelope.isSavings);
   const bills = useBudget((s) => s.bills);
@@ -40,30 +36,12 @@ export default function HomeScreen() {
     const paid = new Set(paidBills);
     return billsInMonth(bills, month).filter((o) => billStatus(o.bill.id, o.date, paid, today()) === 'overdue');
   }, [bills, paidBills, month]);
-  const totalAvailable = summary.envelopes.reduce((t, e) => t + e.available, 0);
-  const data = useBudgetData();
-  const todayDate = today();
-  const todayDay = Number(todayDate.slice(8, 10));
-  const pace = useMemo(() => spendingPace(data, month, todayDay), [data, month, todayDay]);
-  const points = useMemo(() => dailySpending(data.expenses, month, todayDay), [data.expenses, month, todayDay]);
-  // This month's fixed bills, and how much of that isn't marked paid yet.
-  const fixed = useMemo(() => {
-    const paid = new Set(paidBills);
-    const due = billsInMonth(bills, month);
-    return {
-      total: due.reduce((t, o) => t + o.bill.amount, 0),
-      unpaid: due.filter((o) => !paid.has(billKey(o.bill.id, o.date))).reduce((t, o) => t + o.bill.amount, 0),
-    };
-  }, [bills, paidBills, month]);
   const homeChart = useBudget((s) => s.homeChart);
 
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.sm }]}>
-        <View style={local.brandRow}>
-          <Text style={local.brand}>TALLY</Text>
-          <Text style={local.model}>{monthLabel(month).toUpperCase()}</Text>
-        </View>
+        <Text style={local.month}>{monthLabel(month).toUpperCase()}</Text>
 
         <Pressable onPress={() => router.push('/spending')} accessibilityRole="button" accessibilityLabel="Spending details">
           <Display>
@@ -270,15 +248,15 @@ function BillsWidget({ onPress }: { onPress: () => void }) {
 }
 
 const local = StyleSheet.create({
-  brandRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'baseline',
+  month: {
+    fontFamily: fonts.bold,
+    fontSize: 12,
+    letterSpacing: 1.4,
+    color: colors.muted,
+    textAlign: 'right',
     marginBottom: spacing.sm,
     paddingHorizontal: 2,
   },
-  brand: { fontFamily: fonts.brand, fontSize: 28, letterSpacing: 2, color: '#3D4046' },
-  model: { fontFamily: fonts.bold, fontSize: 12, letterSpacing: 1.4, color: colors.muted },
   keyRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
   alert: { marginTop: spacing.sm, backgroundColor: colors.dangerSoft },
   label: { fontFamily: fonts.bold, fontSize: 12, letterSpacing: 1.2, color: colors.muted, textTransform: 'uppercase' },
