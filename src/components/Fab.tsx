@@ -1,37 +1,18 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
-import { Pressable, StyleSheet } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 
-import { colors } from './theme';
+import { Key } from './machine';
+import { fonts } from './theme';
 
-// The big "+" that opens Log spending from anywhere.
+// The big red "−=" key that opens Log spending, pinned to the bottom of the screen.
 export function Fab({ onPress, label = 'Log spending' }: { onPress: () => void; label?: string }) {
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      onPress={onPress}
-      style={({ pressed }) => [styles.fab, pressed && { transform: [{ scale: 0.95 }] }]}
-    >
-      <Ionicons name="add" size={32} color="#fff" />
-    </Pressable>
+    <Key color="red" onPress={onPress} accessibilityLabel={label} style={styles.fab}>
+      <Text style={styles.text}>−=  {label}</Text>
+    </Key>
   );
 }
 
 const styles = StyleSheet.create({
-  fab: {
-    position: 'absolute',
-    right: 20,
-    bottom: 24,
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: colors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 6,
-  },
+  fab: { position: 'absolute', left: 16, right: 16, bottom: 16, alignItems: 'center', paddingVertical: 14 },
+  text: { fontFamily: fonts.bold, fontSize: 17, letterSpacing: 1.6, color: '#fff', textTransform: 'uppercase' },
 });

@@ -6,7 +6,7 @@ import { shortDateLabel, today } from '@/lib/dates';
 import { formatMoney } from '@/lib/money';
 import { useBudget } from '@/lib/store';
 import type { Bill, DateString } from '@/lib/types';
-import { colors, radius, spacing } from './theme';
+import { colors, fonts, radius, spacing } from './theme';
 import { Card, styles } from './ui';
 
 const STATUS: Record<BillStatus, { label: string; color: string }> = {
@@ -28,14 +28,14 @@ export function BillCard({ bill, date, detail, onPress }: { bill: Bill; date: Da
       <Card style={status === 'overdue' ? { borderColor: colors.danger, borderWidth: 1 } : undefined}>
         <View style={styles.row}>
           <Text style={[styles.title, paid && { color: colors.muted }]}>{bill.name}</Text>
-          <Text style={[styles.title, paid && { color: colors.muted }]}>{formatMoney(bill.amount)}</Text>
+          <Text style={[styles.money, { fontSize: 17 }, paid && { color: colors.muted }]}>{formatMoney(bill.amount)}</Text>
         </View>
         <Text style={styles.muted}>
           {shortDateLabel(date)}
           {detail ? ` · ${detail}` : ''}
         </Text>
         <View style={[styles.row, { marginTop: spacing.sm }]}>
-          <Text style={[styles.muted, { color: STATUS[status].color, fontWeight: '600' }]}>{STATUS[status].label}</Text>
+          <Text style={[styles.muted, { color: STATUS[status].color, fontFamily: fonts.bold }]}>{STATUS[status].label}</Text>
           <Pressable
             onPress={() => togglePaid(bill.id, date)}
             accessibilityRole="button"
@@ -52,7 +52,7 @@ export function BillCard({ bill, date, detail, onPress }: { bill: Bill; date: Da
             }}
           >
             <Ionicons name={paid ? 'arrow-undo-outline' : 'checkmark'} size={16} color={colors.accent} />
-            <Text style={{ color: colors.accent, fontWeight: '600' }}>{paid ? 'Undo' : 'Mark paid'}</Text>
+            <Text style={{ color: colors.accent, fontFamily: fonts.bold }}>{paid ? 'Undo' : 'Mark paid'}</Text>
           </Pressable>
         </View>
       </Card>

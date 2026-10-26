@@ -6,7 +6,7 @@ import type { DailyPoint, EnvelopeSpend, MonthTotal } from '@/lib/analysis';
 import { monthLabel, parseMonth } from '@/lib/dates';
 import { formatMoney } from '@/lib/money';
 import type { Month } from '@/lib/types';
-import { chart, colors, spacing } from './theme';
+import { chart, colors, fonts, machine, spacing } from './theme';
 import { styles as ui } from './ui';
 
 const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -21,6 +21,7 @@ export function SpendLineChart({
   month,
   height = 140,
   interactive = true,
+  onDisplay = false,
 }: {
   points: DailyPoint[];
   budget: number;
@@ -28,7 +29,12 @@ export function SpendLineChart({
   month: Month;
   height?: number;
   interactive?: boolean;
+  // Drawn in glowing blue for the dark calculator display.
+  onDisplay?: boolean;
 }) {
+  const ink = onDisplay
+    ? { line: machine.digit, pace: machine.digitDim, grid: machine.digitFaint, text: machine.digitDim, dotEdge: machine.display }
+    : { line: chart.variable, pace: chart.pace, grid: chart.grid, text: colors.muted, dotEdge: '#fff' };
   const [width, setWidth] = useState(0);
   const [hover, setHover] = useState<number | null>(null);
   const pad = { top: 10, bottom: 18, left: 2, right: 2 };
@@ -51,11 +57,13 @@ export function SpendLineChart({
   const [, mm] = month.split('-');
   return (
     <View>
-      <Text style={[ui.muted, { minHeight: 18 }]}>
-        {shown
-          ? `${shortMonth(month)} ${shown.day}: ${formatMoney(shown.cumulative, { showCents: false })} spent so far, pace ${formatMoney(Math.round((budget * shown.day) / days), { showCents: false })}`
-          : ' '}
-      </Text>
+      {!onDisplay && (
+        <Text style={[ui.muted, { minHeight: 18 }]}>
+          {shown
+            ? `${shortMonth(month)} ${shown.day}: ${formatMoney(shown.cumulative, { showCents: false })} spent so far, pace ${formatMoney(Math.round((budget * shown.day) / days), { showCents: false })}`
+            : ' '}
+        </Text>
+      )}
       <View
         onLayout={(e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width)}
         onStartShouldSetResponder={() => interactive}
@@ -69,29 +77,31 @@ export function SpendLineChart({
       >
         {width > 0 && (
           <Svg width={width} height={height}>
-            <Line x1={pad.left} x2={width - pad.right} y1={y(0)} y2={y(0)} stroke={chart.grid} strokeWidth={1} />
-            <Line x1={pad.left} x2={width - pad.right} y1={y(budget)} y2={y(budget)} stroke={chart.grid} strokeWidth={1} />
-            <Line x1={x(1)} y1={y(0)} x2={x(days)} y2={y(budget)} stroke={chart.pace} strokeWidth={1.5} strokeDasharray="4 4" />
-            {points.length > 0 && <Path d={spentPath} stroke={chart.variable} strokeWidth={2} fill="none" strokeLinejoin="round" />}
-            {last && <Circle cx={x(last.day)} cy={y(last.cumulative)} r={4} fill={chart.variable} stroke="#fff" strokeWidth={2} />}
+            <Line x1={pad.left} x2={width - pad.right} y1={y(0)} y2={y(0)} stroke={ink.grid} strokeWidth={1} />
+            <Line x1={pad.left} x2={width - pad.right} y1={y(budget)} y2={y(budget)} stroke={ink.grid} strokeWidth={1} />
+            <Line x1={x(1)} y1={y(0)} x2={x(days)} y2={y(budget)} stroke={ink.pace} strokeWidth={1.5} strokeDasharray="4 4" />
+            {points.length > 0 && <Path d={spentPath} stroke={ink.line} strokeWidth={onDisplay ? 2.5 : 2} fill="none" strokeLinejoin="round" />}
+            {last && <Circle cx={x(last.day)} cy={y(last.cumulative)} r={4} fill={ink.line} stroke={ink.dotEdge} strokeWidth={2} />}
             {shown && (
               <>
-                <Line x1={x(shown.day)} x2={x(shown.day)} y1={pad.top} y2={y(0)} stroke={colors.muted} strokeWidth={1} />
-                <Circle cx={x(shown.day)} cy={y(shown.cumulative)} r={5} fill={chart.variable} stroke="#fff" strokeWidth={2} />
+                <Line x1={x(shown.day)} x2={x(shown.day)} y1={pad.top} y2={y(0)} stroke={ink.text} strokeWidth={1} />
+                <Circle cx={x(shown.day)} cy={y(shown.cumulative)} r={5} fill={ink.line} stroke={ink.dotEdge} strokeWidth={2} />
               </>
             )}
           </Svg>
         )}
-        <Text style={[local.axis, { left: 0 }]}>{`${Number(mm)}/1`}</Text>
-        <Text style={[local.axis, { right: 0 }]}>{`${Number(mm)}/${days}`}</Text>
-        <Text style={[local.budgetLabel, { top: Math.max(0, y(budget) - 16) }]}>
+        <Text style={[local.axis, { left: 0, color: ink.text }]}>{`${Number(mm)}/1`}</Text>
+        <Text style={[local.axis, { right: 0, color: ink.text }]}>{`${Number(mm)}/${days}`}</Text>
+        <Text style={[local.budgetLabel, { top: Math.max(0, y(budget) - 16), color: ink.text }]}>
           Budget {formatMoney(budget, { showCents: false })}
         </Text>
       </View>
-      <View style={local.legend}>
-        <LegendItem color={chart.variable} label="Spent" />
-        <LegendItem color={chart.pace} label="Even pace" dashed />
-      </View>
+      {!onDisplay && (
+        <View style={local.legend}>
+          <LegendItem color={chart.variable} label="Spent" />
+          <LegendItem color={chart.pace} label="Even pace" dashed />
+        </View>
+      )}
     </View>
   );
 }
@@ -152,7 +162,7 @@ export function MonthBars({ totals, selected, onSelect }: { totals: MonthTotal[]
       </View>
       <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
         {totals.map((t) => (
-          <Text key={t.month} style={[ui.muted, { flex: 1, textAlign: 'center', fontWeight: t.month === selected ? '700' : '400' }]}>
+          <Text key={t.month} style={[ui.muted, { flex: 1, textAlign: 'center', fontFamily: t.month === selected ? fonts.bold : fonts.body }]}>
             {shortMonth(t.month)}
           </Text>
         ))}
@@ -193,7 +203,7 @@ export function EnvelopeBars({ rows, onPress }: { rows: EnvelopeSpend[]; onPress
 }
 
 const local = StyleSheet.create({
-  axis: { position: 'absolute', bottom: 0, fontSize: 11, color: colors.muted },
-  budgetLabel: { position: 'absolute', left: 4, fontSize: 11, color: colors.muted },
+  axis: { position: 'absolute', bottom: 0, fontSize: 11, fontFamily: fonts.mono, color: colors.muted },
+  budgetLabel: { position: 'absolute', left: 4, fontSize: 11, fontFamily: fonts.mono, color: colors.muted },
   legend: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.sm, flexWrap: 'wrap' },
 });

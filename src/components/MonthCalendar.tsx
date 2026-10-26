@@ -3,7 +3,8 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { addMonths, dateInMonth, daysInMonth, monthLabel, today, weekdayOf } from '@/lib/dates';
 import type { DateString, Month } from '@/lib/types';
-import { colors, radius, spacing } from './theme';
+import { keyColors } from './machine';
+import { colors, fonts, spacing } from './theme';
 
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
@@ -70,10 +71,13 @@ export function MonthCalendar({
 const styles = StyleSheet.create({
   wrap: {
     backgroundColor: colors.card,
-    borderRadius: radius.md,
+    borderRadius: 3,
     padding: spacing.sm,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 1,
   },
   header: {
     flexDirection: 'row',
@@ -82,15 +86,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.sm,
   },
-  headerText: { fontSize: 17, fontWeight: '600', color: colors.text },
+  headerText: { fontFamily: fonts.bold, fontSize: 18, letterSpacing: 1, textTransform: 'uppercase', color: colors.text },
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
   cell: { width: `${100 / 7}%`, alignItems: 'center', paddingVertical: 4 },
-  weekday: { color: colors.muted, fontSize: 12, fontWeight: '600', textAlign: 'center' },
-  day: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
-  daySelected: { backgroundColor: colors.accent },
-  dayToday: { borderWidth: 1, borderColor: colors.accent },
-  dayText: { fontSize: 15, color: colors.text },
-  dayTextSelected: { color: '#fff', fontWeight: '600' },
-  dot: { width: 5, height: 5, borderRadius: 3, marginTop: 2, backgroundColor: 'transparent' },
-  dotOn: { backgroundColor: colors.warning },
+  weekday: { fontFamily: fonts.bold, color: colors.muted, fontSize: 12, textAlign: 'center' },
+  day: { width: 34, height: 34, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
+  daySelected: { backgroundColor: keyColors('blue').face },
+  dayToday: { borderWidth: 2, borderColor: keyColors('red').face },
+  dayText: { fontFamily: fonts.display, fontSize: 16, color: colors.text },
+  dayTextSelected: { color: '#fff' },
+  dot: { width: 6, height: 6, borderRadius: 1, marginTop: 2, backgroundColor: 'transparent' },
+  dotOn: { backgroundColor: keyColors('yellow').edge },
 });
