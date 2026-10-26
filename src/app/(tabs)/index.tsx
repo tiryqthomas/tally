@@ -46,7 +46,15 @@ export default function HomeScreen() {
   const todayDay = Number(todayDate.slice(8, 10));
   const pace = useMemo(() => spendingPace(data, month, todayDay), [data, month, todayDay]);
   const points = useMemo(() => dailySpending(data.expenses, month, todayDay), [data.expenses, month, todayDay]);
-  const fixedThisMonth = useMemo(() => billsInMonth(bills, month).reduce((t, o) => t + o.bill.amount, 0), [bills, month]);
+  // This month's fixed bills, and how much of that isn't marked paid yet.
+  const fixed = useMemo(() => {
+    const paid = new Set(paidBills);
+    const due = billsInMonth(bills, month);
+    return {
+      total: due.reduce((t, o) => t + o.bill.amount, 0),
+      unpaid: due.filter((o) => !paid.has(billKey(o.bill.id, o.date))).reduce((t, o) => t + o.bill.amount, 0),
+    };
+  }, [bills, paidBills, month]);
   const daysLeft = daysInMonth(month) - todayDay;
 
   return (
@@ -62,9 +70,7 @@ export default function HomeScreen() {
             <DisplayLabel>{totalAvailable < 0 ? 'Over budget' : 'Left to spend'}</DisplayLabel>
             <DisplayDigits>{digits(totalAvailable)}</DisplayDigits>
             <DisplayNote>
-              {pace.ahead > 0
-                ? `${digits(pace.ahead)} AHEAD OF PACE`
-                : `${digits(-pace.ahead)} UNDER PACE`}
+              {pace.ahead > 0 ? `${digits(pace.ahead)} AHEAD OF PACE` : `${digits(-pace.ahead)} UNDER PACE`}
               {` · ${daysLeft} ${daysLeft === 1 ? 'DAY' : 'DAYS'} LEFT`}
             </DisplayNote>
             <SpendLineChart
@@ -80,8 +86,17 @@ export default function HomeScreen() {
         </Pressable>
 
         <View style={local.keyRow}>
-          <Key color="blue" style={{ flex: 1 }} onPress={() => router.push('/bills')} accessibilityLabel="Fixed bills">
-            <KeyLabel color="blue" label="Bills · fixed" value={digits(fixedThisMonth)} />
+          <Key
+            color="blue"
+            style={{ flex: 1 }}
+            onPress={() => router.push('/bills')}
+            accessibilityLabel={`Fixed bills: ${formatMoney(fixed.unpaid)} left to pay of ${formatMoney(fixed.total)}`}
+          >
+            <KeyLabel
+              color="blue"
+              label={`Bills left · of ${digits(fixed.total).replace(/\.\d\d$/, '')}`}
+              value={digits(fixed.unpaid)}
+            />
           </Key>
           <Key style={{ flex: 1 }} onPress={() => router.push('/spending')} accessibilityLabel="Variable spending">
             <KeyLabel label={`Spent · of ${digits(pace.budget).replace(/\.\d\d$/, '')}`} value={digits(pace.spent)} />
@@ -117,8 +132,7 @@ export default function HomeScreen() {
             <View style={{ flexDirection: 'row', gap: spacing.sm }}>
               <Ionicons name="alert-circle" size={20} color={colors.danger} />
               <Text style={[styles.body, { flex: 1 }]}>
-                {formatMoney(summary.totalCovered)} was pulled from {savings?.envelope.name ?? 'savings'} this month to
-                cover{' '}
+                {formatMoney(summary.totalCovered)} was pulled from {savings?.envelope.name ?? 'savings'} this month to cover{' '}
                 {summary.envelopes
                   .filter((e) => e.coveredBySavings > 0)
                   .map((e) => `${e.envelope.name} (${formatMoney(e.coveredBySavings)})`)
@@ -136,12 +150,14 @@ export default function HomeScreen() {
           ))}
           <View style={[local.line, local.total]}>
             <Text style={local.tapeBold}>LEFT</Text>
-            <Text style={local.tapeBold}>
-              {digits(others.reduce((t, e) => t + e.available, 0))} *
-            </Text>
+            <Text style={local.tapeBold}>{digits(others.reduce((t, e) => t + e.available, 0))} *</Text>
           </View>
         </PaperTape>
-        <Pressable onPress={() => router.push('/new-envelope')} style={{ paddingVertical: spacing.sm }} accessibilityRole="button">
+        <Pressable
+          onPress={() => router.push('/new-envelope')}
+          style={{ paddingVertical: spacing.sm }}
+          accessibilityRole="button"
+        >
           <Text style={local.add}>+ ADD CATEGORY</Text>
         </Pressable>
 
@@ -152,8 +168,8 @@ export default function HomeScreen() {
               <TapeRow row={savings} onPress={() => router.push(`/envelope/${savings.envelope.id}`)} />
             </PaperTape>
             <Text style={styles.muted}>
-              Gets whatever income your other categories don't use, covers any category that runs out, and carries its
-              balance month to month.
+              Gets whatever income your other categories don't use, covers any category that runs out, and carries its balance
+              month to month.
             </Text>
           </>
         )}
@@ -209,7 +225,9 @@ function BillsWidget({ onPress }: { onPress: () => void }) {
       <View style={styles.row}>
         <Text style={local.label}>Bills this week</Text>
         <Text style={local.label}>
-          {upcoming.length === 0 ? 'None due' : `${digits(total)} · ${upcoming.length} ${upcoming.length === 1 ? 'bill' : 'bills'}`}
+          {upcoming.length === 0
+            ? 'None due'
+            : `${digits(total)} · ${upcoming.length} ${upcoming.length === 1 ? 'bill' : 'bills'}`}
         </Text>
       </View>
       <View style={local.week}>
@@ -258,7 +276,13 @@ function BillsWidget({ onPress }: { onPress: () => void }) {
 }
 
 const local = StyleSheet.create({
-  brandRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: spacing.sm, paddingHorizontal: 2 },
+  brandRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    marginBottom: spacing.sm,
+    paddingHorizontal: 2,
+  },
   brand: { fontFamily: fonts.brand, fontSize: 28, letterSpacing: 2, color: '#3D4046' },
   model: { fontFamily: fonts.bold, fontSize: 12, letterSpacing: 1.4, color: colors.muted },
   keyRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
