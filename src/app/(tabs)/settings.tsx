@@ -8,7 +8,7 @@ import { incomeFor } from '@/lib/budget';
 import { currentMonth } from '@/lib/dates';
 import { exportBackup, pickBackup } from '@/lib/backupFile';
 import { REMINDER_OPTIONS } from '@/lib/reminderPlan';
-import { reminderPermission, type ReminderPermission } from '@/lib/reminders';
+import { reminderPermission, sendTestReminder, type ReminderPermission } from '@/lib/reminders';
 import { selectSaved, useBudget } from '@/lib/store';
 
 export default function SettingsScreen() {
@@ -29,6 +29,17 @@ export default function SettingsScreen() {
     if (!parsed) return;
     setIncome(parsed);
     Alert.alert('Income updated', 'The new amount applies from this month on. Past months keep the old amount.');
+  }
+
+  async function testReminder() {
+    const sent = await sendTestReminder();
+    setPermission(await reminderPermission());
+    Alert.alert(
+      sent ? 'Test reminder on its way' : 'Notifications are off',
+      sent
+        ? 'It should appear in about 5 seconds.'
+        : 'Turn on notifications for this app in your phone settings, then try again.',
+    );
   }
 
   async function backup() {
@@ -113,6 +124,10 @@ export default function SettingsScreen() {
               ? 'Reminders work in the phone app.'
               : 'A notification at 9am for each bill you haven\'t marked paid.'}
       </Text>
+
+      {reminders !== 'off' && permission !== 'unsupported' && (
+        <Button title="Send a test reminder" variant="secondary" onPress={testReminder} />
+      )}
 
       <SectionTitle>Your data</SectionTitle>
       <Text style={[styles.muted, { marginBottom: spacing.md }]}>

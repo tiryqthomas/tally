@@ -64,3 +64,13 @@ export async function syncReminders(
     });
   }
 }
+
+// Sends a sample reminder a few seconds from now, so people can check notifications work.
+export async function sendTestReminder(): Promise<boolean> {
+  if (Platform.OS === 'web' || !(await ensurePermission())) return false;
+  await Notifications.scheduleNotificationAsync({
+    content: { title: 'Rent is due tomorrow', body: 'This is a test reminder from Tally.' },
+    trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 5, channelId: CHANNEL_ID },
+  });
+  return true;
+}

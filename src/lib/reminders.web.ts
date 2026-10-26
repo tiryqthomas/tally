@@ -14,3 +14,7 @@ export async function syncReminders(
   _paidBills: string[],
   _setting: ReminderSetting,
 ): Promise<void> {}
+
+export async function sendTestReminder(): Promise<boolean> {
+  return false;
+}
