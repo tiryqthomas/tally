@@ -2,10 +2,11 @@ import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 
-import { BillCard } from '@/components/BillCard';
+import { BillRow } from '@/components/BillCard';
+import { digits, Display, DisplayDigits, DisplayLabel, DisplayNote, PaperTape } from '@/components/machine';
 import { MonthCalendar } from '@/components/MonthCalendar';
-import { chart, spacing } from '@/components/theme';
-import { Button, Card, SectionTitle, styles } from '@/components/ui';
+import { spacing } from '@/components/theme';
+import { Button, SectionTitle, styles } from '@/components/ui';
 import { billsBetween, nextSevenDays } from '@/lib/analysis';
 import { billKey, billsInMonth, type BillOccurrence } from '@/lib/budget';
 import { currentMonth, monthLabel, shortDateLabel, today } from '@/lib/dates';
@@ -32,9 +33,10 @@ export default function BillsScreen() {
   const unpaid = occurrences.filter((o) => !paidBills.includes(billKey(o.bill.id, o.date)));
   const nameOf = (list: { id: string; name: string }[], id?: string) => list.find((x) => x.id === id)?.name;
 
-  const card = ({ bill, date }: BillOccurrence) => (
-    <BillCard
+  const row = ({ bill, date }: BillOccurrence, i: number) => (
+    <BillRow
       key={`${bill.id}${date}`}
+      first={i === 0}
       bill={bill}
       date={date}
       detail={[nameOf(envelopes, bill.envelopeId), bill.accountId && `from ${nameOf(accounts, bill.accountId)}`]
@@ -46,16 +48,16 @@ export default function BillsScreen() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Card style={{ borderLeftWidth: 4, borderLeftColor: chart.fixed }}>
-        <Text style={styles.muted}>Next 7 days</Text>
-        <Text style={styles.big}>{formatMoney(sum(thisWeek))}</Text>
-        <Text style={styles.muted}>
+      <Display>
+        <DisplayLabel>Due in the next 7 days</DisplayLabel>
+        <DisplayDigits roll>{digits(sum(thisWeek))}</DisplayDigits>
+        <DisplayNote>
           {thisWeek.length === 0
-            ? 'No bills due this week.'
-            : `${thisWeek.length} ${thisWeek.length === 1 ? 'bill' : 'bills'} due ${shortDateLabel(week[0])} to ${shortDateLabel(week[6])}`}
-        </Text>
-      </Card>
-      {thisWeek.map(card)}
+            ? 'No bills due this week'
+            : `${thisWeek.length} ${thisWeek.length === 1 ? 'bill' : 'bills'} · ${shortDateLabel(week[0])} to ${shortDateLabel(week[6])}`}
+        </DisplayNote>
+      </Display>
+      {thisWeek.length > 0 && <PaperTape style={{ marginTop: spacing.md }}>{thisWeek.map(row)}</PaperTape>}
 
       <SectionTitle>Calendar</SectionTitle>
       <MonthCalendar
@@ -73,7 +75,7 @@ export default function BillsScreen() {
         <Text style={styles.muted}>
           {selected ? `Due ${shortDateLabel(selected)}` : `${monthLabel(month)} · set aside on the 1st`}
         </Text>
-        <Text style={styles.title}>{formatMoney(sum(selected ? shown : occurrences))}</Text>
+        <Text style={styles.money}>{digits(sum(selected ? shown : occurrences))}</Text>
       </View>
       {!selected && unpaid.length > 0 && (
         <Text style={[styles.muted, { marginTop: spacing.xs }]}>
@@ -83,7 +85,7 @@ export default function BillsScreen() {
 
       <SectionTitle>{selected ? 'Bills that day' : 'All bills this month'}</SectionTitle>
       {shown.length === 0 && <Text style={styles.muted}>No bills{selected ? ' on this day' : ' this month'}.</Text>}
-      {shown.map(card)}
+      {shown.length > 0 && <PaperTape>{shown.map(row)}</PaperTape>}
 
       <View style={{ marginTop: spacing.md }}>
         <Button

@@ -39,6 +39,15 @@ export function Button({
   );
 }
 
+// A plain text action in the accent color, e.g. "+ Add category". Used wherever a list can grow.
+export function TextLink({ title, onPress }: { title: string; onPress: () => void }) {
+  return (
+    <Pressable onPress={onPress} accessibilityRole="button" hitSlop={8} style={styles.textLink}>
+      <Text style={styles.textLinkText}>{title}</Text>
+    </Pressable>
+  );
+}
+
 export function Field({ label, ...props }: TextInputProps & { label: string }) {
   return (
     <View style={{ marginBottom: spacing.md }}>
@@ -139,7 +148,7 @@ export const styles = StyleSheet.create({
     borderRadius: radius.paper,
     borderWidth: 1,
     borderColor: colors.border,
-    padding: spacing.gutter,
+    padding: spacing.md,
     marginBottom: spacing.sm,
   },
   button: {
@@ -192,6 +201,8 @@ export const styles = StyleSheet.create({
     marginBottom: spacing.sm + 2,
   },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  textLink: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start' },
+  textLinkText: { fontFamily: fonts.bold, ...type.body, color: colors.accent },
   screenTitle: { fontFamily: fonts.bold, ...type.title, color: colors.text },
   title: { fontFamily: fonts.bold, ...type.headline, color: colors.text },
   body: { fontFamily: fonts.body, ...type.body, color: colors.text },

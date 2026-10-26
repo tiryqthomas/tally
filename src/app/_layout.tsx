@@ -3,9 +3,10 @@ import { GeistMono_400Regular } from '@expo-google-fonts/geist-mono';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { useEffect } from 'react';
+import { Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 
-import { colors, fonts } from '@/components/theme';
+import { colors, fonts, type } from '@/components/theme';
 import { receiptNames } from '@/lib/backup';
 import { useHydrated, useReminderSync } from '@/lib/hooks';
 import { pruneReceipts } from '@/lib/receipts';
@@ -37,7 +38,17 @@ export default function RootLayout() {
       <Stack
         screenOptions={{
           headerTintColor: colors.accent,
-          headerTitleStyle: { color: colors.text, fontFamily: fonts.bold },
+          // Same big left-aligned title as the tab screens. iOS shows it as a large title that
+          // shrinks into the bar on scroll; elsewhere it's the same size as the tab titles.
+          headerTitleAlign: 'left',
+          headerTitleStyle: {
+            color: colors.text,
+            fontFamily: fonts.bold,
+            fontSize: Platform.OS === 'ios' ? type.headline.fontSize : type.title.fontSize,
+          },
+          headerLargeTitle: true,
+          headerLargeTitleShadowVisible: false,
+          headerLargeTitleStyle: { color: colors.text, fontFamily: fonts.bold },
           contentStyle: { backgroundColor: colors.background },
           headerTransparent: false,
           headerStyle: { backgroundColor: colors.background },

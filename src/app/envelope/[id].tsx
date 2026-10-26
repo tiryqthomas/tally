@@ -2,7 +2,8 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 
-import { BillCard } from '@/components/BillCard';
+import { BillRow } from '@/components/BillCard';
+import { digits, Display, DisplayDigits, DisplayLabel, DisplayNote, PaperTape, tape } from '@/components/machine';
 import { colors, spacing } from '@/components/theme';
 import { Button, Card, Field, SectionTitle, styles } from '@/components/ui';
 import { billsInMonth, summarizeMonths } from '@/lib/budget';
@@ -94,12 +95,15 @@ export default function EnvelopeDetail() {
     <>
       <Stack.Screen options={{ title: envelope.name }} />
       <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-        <Text style={styles.muted}>{monthLabel(month)} · available</Text>
-        <Text style={[styles.big, row.available < 0 && { color: colors.danger }]}>{formatMoney(row.available)}</Text>
+        <Display>
+          <DisplayLabel>{row.available < 0 ? 'Over' : 'Left'} in {monthLabel(month)}</DisplayLabel>
+          <DisplayDigits roll>{digits(row.available)}</DisplayDigits>
+          {envelope.isSavings && <DisplayNote>Carries over month to month</DisplayNote>}
+        </Display>
         {envelope.isSavings && (
           <Text style={[styles.muted, { marginTop: spacing.xs }]}>
             Gets whatever income your other categories don't use. When another category runs out, the difference comes
-            out of this one. The balance carries from month to month.
+            out of this one.
           </Text>
         )}
 
@@ -109,7 +113,7 @@ export default function EnvelopeDetail() {
             .map(([label, v]) => (
               <View key={label} style={[styles.row, { paddingVertical: 4 }]}>
                 <Text style={styles.body}>{label}</Text>
-                <Text style={[styles.body, v < 0 && { color: colors.muted }]}>{formatMoney(v)}</Text>
+                <Text style={[styles.money, v < 0 && { color: colors.muted }]}>{digits(v)}</Text>
               </View>
             ))}
         </Card>
@@ -130,40 +134,48 @@ export default function EnvelopeDetail() {
         {monthBills.length > 0 && (
           <>
             <SectionTitle>Bills this month</SectionTitle>
-            {monthBills.map(({ bill, date }) => (
-              <BillCard
-                key={`${bill.id}${date}`}
-                bill={bill}
-                date={date}
-                detail="Set aside on the 1st"
-                onPress={() => router.push({ pathname: '/bill', params: { id: bill.id } })}
-              />
-            ))}
+            <PaperTape>
+              {monthBills.map(({ bill, date }, i) => (
+                <BillRow
+                  key={`${bill.id}${date}`}
+                  first={i === 0}
+                  bill={bill}
+                  date={date}
+                  detail="Set aside on the 1st"
+                  onPress={() => router.push({ pathname: '/bill', params: { id: bill.id } })}
+                />
+              ))}
+            </PaperTape>
           </>
         )}
 
         <SectionTitle>Spending this month</SectionTitle>
         {monthExpenses.length === 0 && <Text style={styles.muted}>Nothing logged yet.</Text>}
-        {monthExpenses.map((x) => (
-          <Pressable
-            key={x.id}
-            onPress={() => router.push({ pathname: '/add-expense', params: { id: x.id } })}
-            onLongPress={() =>
-              Alert.alert('Delete this expense?', `${formatMoney(x.amount)}${x.note ? ` · ${x.note}` : ''}`, [
-                { text: 'Cancel', style: 'cancel' },
-                { text: 'Delete', style: 'destructive', onPress: () => deleteExpense(x.id) },
-              ])
-            }
-          >
-            <Card>
-              <View style={styles.row}>
-                <Text style={styles.body}>{x.note || 'Expense'}</Text>
-                <Text style={styles.body}>{formatMoney(x.amount)}</Text>
-              </View>
-              <Text style={styles.muted}>{shortDateLabel(x.date)}</Text>
-            </Card>
-          </Pressable>
-        ))}
+        {monthExpenses.length > 0 && (
+          <PaperTape>
+            {monthExpenses.map((x, i) => (
+              <Pressable
+                key={x.id}
+                style={[tape.row, i > 0 && tape.divider]}
+                onPress={() => router.push({ pathname: '/add-expense', params: { id: x.id } })}
+                onLongPress={() =>
+                  Alert.alert('Delete this expense?', `${formatMoney(x.amount)}${x.note ? ` · ${x.note}` : ''}`, [
+                    { text: 'Cancel', style: 'cancel' },
+                    { text: 'Delete', style: 'destructive', onPress: () => deleteExpense(x.id) },
+                  ])
+                }
+              >
+                <View style={tape.line}>
+                  <Text style={[tape.name, { flex: 1 }]} numberOfLines={1}>
+                    {x.note || 'Expense'}
+                  </Text>
+                  <Text style={tape.amount}>−{digits(x.amount)}</Text>
+                </View>
+                <Text style={tape.caption}>{shortDateLabel(x.date)}</Text>
+              </Pressable>
+            ))}
+          </PaperTape>
+        )}
         {monthExpenses.length > 0 && <Text style={styles.muted}>Tap an expense to edit it, or press and hold to delete it.</Text>}
 
         {envelope.isSavings && (
@@ -178,8 +190,8 @@ export default function EnvelopeDetail() {
                       {monthLabel(h.month)}
                       {i === 0 ? ' (so far)' : ''}
                     </Text>
-                    <Text style={[styles.body, h.end < 0 && { color: colors.danger }]}>
-                      {formatMoney(h.end)}
+                    <Text style={[styles.money, h.end < 0 && { color: colors.danger }]}>
+                      {digits(h.end)}
                       <Text style={[styles.muted, { color: change < 0 ? colors.danger : colors.accent }]}>
                         {'  '}
                         {change >= 0 ? '+' : ''}

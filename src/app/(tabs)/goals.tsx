@@ -2,10 +2,10 @@ import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
-import { digits, Display, DisplayDigits, DisplayLabel, DisplayNote, Key, KeyLabel, PaperTape, PrintIn, tape } from '@/components/machine';
+import { digits, Display, DisplayDigits, DisplayLabel, DisplayNote, PaperTape, PrintIn, tape } from '@/components/machine';
 import { AbacusRod } from '@/components/Abacus';
 import { colors, spacing } from '@/components/theme';
-import { SectionTitle, styles } from '@/components/ui';
+import { SectionTitle, styles, TextLink } from '@/components/ui';
 import { currentMonth, monthLabel, shortDateLabel } from '@/lib/dates';
 import { goalProgress, type GoalProgress } from '@/lib/goals';
 import { useMonthSummary } from '@/lib/hooks';
@@ -34,10 +34,6 @@ export default function GoalsScreen() {
         {savings && <DisplayNote>Savings left ${digits(savings.available)}</DisplayNote>}
       </Display>
 
-      <Key color="light" style={{ marginTop: spacing.md }} onPress={() => router.push('/goal')} accessibilityLabel="Add a goal">
-        <KeyLabel color="light" label="+ New goal" value="Something to buy" />
-      </Key>
-
       {open.length === 0 ? (
         <Text style={[styles.muted, { marginTop: spacing.md }]}>
           Add something you want to buy, when you want it, and how much to put toward it each month. That amount comes out
@@ -54,6 +50,7 @@ export default function GoalsScreen() {
           <Text style={styles.muted}>Set aside on the 1st of each month from Savings / Discretionary.</Text>
         </>
       )}
+      <TextLink title="+ New goal" onPress={() => router.push('/goal')} />
 
       {bought.length > 0 && (
         <>

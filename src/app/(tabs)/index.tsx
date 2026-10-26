@@ -8,7 +8,7 @@ import { Fab } from '@/components/Fab';
 import { AbacusRod } from '@/components/Abacus';
 import { digits, Display, PaperTape, PrintIn, tape, TapeNote } from '@/components/machine';
 import { colors, fonts, machine, radius, spacing, tracking, type } from '@/components/theme';
-import { SectionTitle, styles } from '@/components/ui';
+import { SectionTitle, styles, TextLink } from '@/components/ui';
 import { billsBetween, nextSevenDays } from '@/lib/analysis';
 import { billKey, billsInMonth, billStatus, type EnvelopeMonth } from '@/lib/budget';
 import { monthLabel, shortDateLabel, today, weekdayOf } from '@/lib/dates';
@@ -99,9 +99,9 @@ export default function HomeScreen() {
 
         <SectionTitle>Categories</SectionTitle>
         <PaperTape>
-          {others.map((e) => (
+          {others.map((e, i) => (
             <PrintIn key={e.envelope.id}>
-              <TapeRow row={e} onPress={() => router.push(`/envelope/${e.envelope.id}`)} />
+              <TapeRow row={e} first={i === 0} onPress={() => router.push(`/envelope/${e.envelope.id}`)} />
             </PrintIn>
           ))}
           <View style={[tape.line, tape.total]}>
@@ -109,20 +109,13 @@ export default function HomeScreen() {
             <Text style={tape.amount}>{digits(others.reduce((t, e) => t + e.available, 0))}</Text>
           </View>
         </PaperTape>
-        <Pressable
-          onPress={() => router.push('/new-envelope')}
-          style={local.addButton}
-          hitSlop={8}
-          accessibilityRole="button"
-        >
-          <Text style={local.add}>+ Add category</Text>
-        </Pressable>
+        <TextLink title="+ Add category" onPress={() => router.push('/new-envelope')} />
 
         {savings && (
           <>
             <SectionTitle>Savings</SectionTitle>
             <PaperTape>
-              <TapeRow row={savings} onPress={() => router.push(`/envelope/${savings.envelope.id}`)} />
+              <TapeRow row={savings} first onPress={() => router.push(`/envelope/${savings.envelope.id}`)} />
             </PaperTape>
             <Text style={styles.muted}>
               Gets whatever income your other categories don't use, covers any category that runs out, and carries its balance
@@ -137,7 +130,7 @@ export default function HomeScreen() {
 }
 
 // One category on the sheet: name and what's left, an abacus rod of what's been used, then the detail.
-function TapeRow({ row, onPress }: { row: EnvelopeMonth; onPress: () => void }) {
+function TapeRow({ row, first, onPress }: { row: EnvelopeMonth; first?: boolean; onPress: () => void }) {
   const budget = row.limit + row.rollover + row.transfersIn - row.transfersOut;
   // Includes money the savings envelope handed to other envelopes.
   const used = budget - row.available;
@@ -153,7 +146,7 @@ function TapeRow({ row, onPress }: { row: EnvelopeMonth; onPress: () => void }) 
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={`${row.envelope.name}, ${formatMoney(row.available)} left${red ? ', over budget' : ''}. ${detail}`}
-      style={tape.row}
+      style={[tape.row, !first && tape.divider]}
     >
       <View style={tape.line}>
         <Text style={[tape.name, ink, { flex: 1 }]} numberOfLines={1}>
@@ -268,6 +261,4 @@ const local = StyleSheet.create({
   dayToday: { borderWidth: 1.5, borderColor: colors.text },
   dayNum: { fontFamily: fonts.numberBold, fontSize: 16, color: colors.text, fontVariant: ['tabular-nums'] },
   dayAmount: { fontFamily: fonts.number, fontSize: 11, letterSpacing: tracking(11), fontVariant: ['tabular-nums'], color: colors.muted, minHeight: 16, marginTop: 4 },
-  addButton: { minHeight: 44, justifyContent: 'center' },
-  add: { fontFamily: fonts.bold, fontSize: 14, color: colors.accent },
 });

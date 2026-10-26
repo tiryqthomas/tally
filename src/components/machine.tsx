@@ -268,6 +268,8 @@ export const tape = StyleSheet.create({
   text: { fontFamily: fonts.body, ...type.body, color: colors.text } as TextStyle,
   caption: { fontFamily: fonts.body, ...type.caption, color: colors.muted, marginTop: 4 } as TextStyle,
   row: { paddingVertical: spacing.sm },
+  // The dotted rule between rows on a sheet.
+  divider: { borderTopWidth: 1, borderStyle: 'dotted', borderTopColor: colors.border },
   total: {
     borderTopWidth: 1,
     borderStyle: 'dashed',

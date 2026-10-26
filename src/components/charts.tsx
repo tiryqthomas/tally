@@ -6,6 +6,8 @@ import type { DailyPoint, EnvelopeSpend, MonthTotal } from '@/lib/analysis';
 import { monthLabel, parseMonth } from '@/lib/dates';
 import { formatMoney } from '@/lib/money';
 import type { Month } from '@/lib/types';
+import { AbacusRod } from './Abacus';
+import { digits, tape } from './machine';
 import { chart, colors, fonts, machine, spacing } from './theme';
 import { styles as ui } from './ui';
 
@@ -175,26 +177,32 @@ export function MonthBars({ totals, selected, onSelect }: { totals: MonthTotal[]
   );
 }
 
-// Variable spending per envelope against its limit.
+// Variable spending per envelope against its limit, drawn like the category rows on Home:
+// name and amount spent, an abacus rod for how much of the limit is used, red when over.
 export function EnvelopeBars({ rows, onPress }: { rows: EnvelopeSpend[]; onPress?: (envelopeId: string) => void }) {
   return (
-    <View style={{ gap: spacing.md }}>
-      {rows.map((r) => {
+    <View>
+      {rows.map((r, i) => {
         const over = r.limit > 0 && r.spent > r.limit;
-        const fraction = r.limit > 0 ? Math.min(1, r.spent / r.limit) : 1;
+        const ink = over ? { color: colors.danger } : undefined;
         return (
-          <Pressable key={r.envelopeId} onPress={onPress ? () => onPress(r.envelopeId) : undefined}>
-            <View style={ui.row}>
-              <Text style={ui.body}>{r.name}</Text>
-              <Text style={ui.body}>
-                {formatMoney(r.spent, { showCents: false })}
-                <Text style={ui.muted}>{r.limit > 0 ? ` of ${formatMoney(r.limit, { showCents: false })}` : ''}</Text>
+          <Pressable
+            key={r.envelopeId}
+            onPress={onPress ? () => onPress(r.envelopeId) : undefined}
+            accessibilityRole="button"
+            accessibilityLabel={`${r.name}, ${formatMoney(r.spent)} spent${r.limit > 0 ? ` of ${formatMoney(r.limit)}` : ''}${over ? ', over' : ''}`}
+            style={[tape.row, i > 0 && tape.divider]}
+          >
+            <View style={tape.line}>
+              <Text style={[tape.name, ink, { flex: 1 }]} numberOfLines={1}>
+                {r.name}
               </Text>
+              <Text style={[tape.amount, ink]}>{digits(r.spent)}</Text>
             </View>
-            <View style={[ui.barTrack, { marginTop: 6 }]}>
-              <View style={[ui.barFill, { width: `${fraction * 100}%`, backgroundColor: over ? colors.danger : chart.variable }]} />
-            </View>
-            {over && <Text style={[ui.muted, { color: colors.danger, marginTop: 2 }]}>Over by {formatMoney(r.spent - r.limit)}</Text>}
+            <AbacusRod fraction={r.limit > 0 ? r.spent / r.limit : 1} red={over} />
+            <Text style={[tape.caption, ink]}>
+              {r.limit > 0 ? `${over ? `Over by ${digits(r.spent - r.limit)} · ` : ''}of ${digits(r.limit)}` : 'No limit set'}
+            </Text>
           </Pressable>
         );
       })}

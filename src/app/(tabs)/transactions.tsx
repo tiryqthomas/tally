@@ -114,7 +114,7 @@ export default function TransactionsScreen() {
                     onPress={r.onPress}
                     accessibilityRole="button"
                     accessibilityLabel={`${r.title}, ${formatMoney(r.amount)}, ${r.detail}`}
-                    style={[tape.row, i > 0 && { borderTopWidth: 1, borderStyle: 'dotted', borderTopColor: colors.border }]}
+                    style={[tape.row, i > 0 && tape.divider]}
                   >
                     <View style={tape.line}>
                       <Text style={[tape.name, { flex: 1 }]} numberOfLines={1}>
