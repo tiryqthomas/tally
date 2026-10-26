@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Alert, Pressable, ScrollView, Switch, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { draftFromIncome, IncomeForm, incomeFromDraft } from '@/components/IncomeForm';
-import { colors, machine, spacing } from '@/components/theme';
+import { colors, spacing } from '@/components/theme';
 import { Button, Card, Chips, Field, SectionTitle, styles } from '@/components/ui';
 import { incomeFor } from '@/lib/budget';
 import { currentMonth } from '@/lib/dates';
 import { exportBackup, pickBackup } from '@/lib/backupFile';
-import { keyClick, logged } from '@/lib/feedback';
 import { REMINDER_OPTIONS } from '@/lib/reminderPlan';
 import { reminderPermission, sendTestReminder, type ReminderPermission } from '@/lib/reminders';
 import { selectSaved, useBudget } from '@/lib/store';
@@ -16,9 +15,7 @@ export default function SettingsScreen() {
   const income = incomeFor(useBudget((s) => s.incomes), currentMonth());
   const accounts = useBudget((s) => s.accounts);
   const reminders = useBudget((s) => s.reminders);
-  const sounds = useBudget((s) => s.sounds);
-  const haptics = useBudget((s) => s.haptics);
-  const { setIncome, addAccount, deleteAccount, resetAll, setReminders, setSounds, setHaptics, restore } = useBudget.getState();
+  const { setIncome, addAccount, deleteAccount, resetAll, setReminders, restore } = useBudget.getState();
   const [permission, setPermission] = useState<ReminderPermission>('undetermined');
   useEffect(() => {
     reminderPermission().then(setPermission);
@@ -132,29 +129,6 @@ export default function SettingsScreen() {
         <Button title="Send a test reminder" variant="secondary" onPress={testReminder} />
       )}
 
-      <SectionTitle>Sounds and vibration</SectionTitle>
-      <Card>
-        <Toggle
-          label="Calculator sounds"
-          detail="Key clicks while you type an amount, and the printer when you log spending."
-          value={sounds}
-          onChange={(on) => {
-            setSounds(on);
-            if (on) keyClick();
-          }}
-        />
-        <View style={{ height: 1, backgroundColor: colors.border, marginVertical: spacing.sm }} />
-        <Toggle
-          label="Vibration"
-          detail="A bump when you log spending."
-          value={haptics}
-          onChange={(on) => {
-            setHaptics(on);
-            if (on && !sounds) logged();
-          }}
-        />
-      </Card>
-
       <SectionTitle>Your data</SectionTitle>
       <Text style={[styles.muted, { marginBottom: spacing.md }]}>
         Tally has no accounts or cloud sync. Everything is stored only on this phone, so deleting the app deletes your
@@ -165,34 +139,5 @@ export default function SettingsScreen() {
       <Button title="Restore from a backup" variant="secondary" onPress={restoreFromFile} />
       <Button title="Erase all data" variant="danger" onPress={confirmReset} />
     </ScrollView>
-  );
-}
-
-function Toggle({
-  label,
-  detail,
-  value,
-  onChange,
-}: {
-  label: string;
-  detail: string;
-  value: boolean;
-  onChange: (on: boolean) => void;
-}) {
-  return (
-    <View style={[styles.row, { gap: spacing.md }]}>
-      <View style={{ flex: 1 }}>
-        <Text style={styles.title}>{label}</Text>
-        <Text style={styles.muted}>{detail}</Text>
-      </View>
-      <Switch
-        value={value}
-        onValueChange={onChange}
-        accessibilityLabel={label}
-        trackColor={{ false: machine.keyLight, true: machine.blue }}
-        thumbColor="#FFFFFF"
-        ios_backgroundColor={machine.keyLight}
-      />
-    </View>
   );
 }

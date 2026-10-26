@@ -1,22 +1,12 @@
 import { StyleSheet, Text } from 'react-native';
 
-import { keyClick } from '@/lib/feedback';
-
 import { Key } from './machine';
 import { fonts } from './theme';
 
 // The big red "−=" key that opens Log spending, pinned to the bottom of the screen.
 export function Fab({ onPress, label = 'Log spending' }: { onPress: () => void; label?: string }) {
   return (
-    <Key
-      color="red"
-      onPress={() => {
-        keyClick();
-        onPress();
-      }}
-      accessibilityLabel={label}
-      style={styles.fab}
-    >
+    <Key color="red" onPress={onPress} accessibilityLabel={label} style={styles.fab}>
       <Text style={styles.text}>−=  {label}</Text>
     </Key>
   );
