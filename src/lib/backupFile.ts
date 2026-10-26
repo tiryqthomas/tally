@@ -9,7 +9,7 @@ import { readReceipts } from './receipts';
 // iCloud Drive, Google Drive, email, and so on. Receipt photos go in the same file.
 export async function exportBackup(state: SavedState): Promise<void> {
   const receipts = await readReceipts(receiptNames(state));
-  const file = new File(Paths.cache, `tally-backup-${today()}.json`);
+  const file = new File(Paths.cache, `abacus-backup-${today()}.json`);
   if (file.exists) file.delete();
   file.create();
   await file.write(serializeBackup(state, new Date(), receipts));
@@ -17,7 +17,7 @@ export async function exportBackup(state: SavedState): Promise<void> {
   await Sharing.shareAsync(file.uri, {
     mimeType: 'application/json',
     UTI: 'public.json',
-    dialogTitle: 'Save your Tally backup',
+    dialogTitle: 'Save your Abacus backup',
   });
 }
 

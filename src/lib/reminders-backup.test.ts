@@ -34,7 +34,7 @@ describe('planReminders', () => {
     expect(plan.map((r) => r.key)).toEqual(['rent:2026-12-01:day-before', 'rent:2027-01-01:day-before']);
     expect(plan[0].at).toEqual(new Date(2026, 10, 30, 9, 0));
     expect(plan[0].title).toBe('Rent is due tomorrow');
-    expect(plan[0].body).toBe('$1,200.00 from Chase checking. Open Tally to mark it paid.');
+    expect(plan[0].body).toBe('$1,200.00 from Chase checking. Open Abacus to mark it paid.');
   });
 
   test('skips bills already marked paid', () => {
@@ -118,7 +118,7 @@ describe('backups', () => {
     expect(parseBackup(file)).toMatchObject({ ok: true, receipts: {}, state: { expenses: [{ id: 'a' }] } });
   });
 
-  test('rejects files that are not Tally backups', () => {
+  test('rejects files that are not Abacus backups', () => {
     expect(parseBackup('hello').ok).toBe(false);
     expect(parseBackup('{"app":"other"}').ok).toBe(false);
     expect(parseBackup(JSON.stringify({ app: 'tally', version: 99, state })).ok).toBe(false);

@@ -5,7 +5,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { HomeDisplay } from '@/components/HomeDisplay';
 import { Fab } from '@/components/Fab';
-import { digits, Display, PaperTape, PrintIn, tape, TapeNote, TickBar } from '@/components/machine';
+import { AbacusRod } from '@/components/Abacus';
+import { digits, Display, PaperTape, PrintIn, tape, TapeNote } from '@/components/machine';
 import { colors, fonts, machine, radius, spacing, tracking, type } from '@/components/theme';
 import { SectionTitle, styles } from '@/components/ui';
 import { billsBetween, nextSevenDays } from '@/lib/analysis';
@@ -135,7 +136,7 @@ export default function HomeScreen() {
   );
 }
 
-// One category on the sheet: name and what's left, a thin progress rule, then the detail.
+// One category on the sheet: name and what's left, an abacus rod of what's been used, then the detail.
 function TapeRow({ row, onPress }: { row: EnvelopeMonth; onPress: () => void }) {
   const budget = row.limit + row.rollover + row.transfersIn - row.transfersOut;
   // Includes money the savings envelope handed to other envelopes.
@@ -160,7 +161,7 @@ function TapeRow({ row, onPress }: { row: EnvelopeMonth; onPress: () => void }) 
         </Text>
         <Text style={[tape.amount, ink]}>{digits(row.available)}</Text>
       </View>
-      <TickBar fraction={budget > 0 ? used / budget : negative ? 1 : 0} red={red} />
+      <AbacusRod fraction={budget > 0 ? used / budget : negative ? 1 : 0} red={red} />
       <Text style={[tape.caption, red && { color: colors.danger }]}>
         {red ? (negative ? 'Over · ' : 'Covered by savings · ') : ''}
         {detail}

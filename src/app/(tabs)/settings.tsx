@@ -152,7 +152,7 @@ export default function SettingsScreen() {
         {reminders.length === 0
           ? 'No reminders. Pick one or more times to be reminded before each bill.'
           : permission === 'denied'
-            ? 'Notifications are turned off for Tally. Turn them on in your phone settings to get reminders.'
+            ? 'Notifications are turned off for Abacus. Turn them on in your phone settings to get reminders.'
             : permission === 'unsupported'
               ? 'Reminders work in the phone app.'
               : reminders.length === 1
@@ -166,7 +166,7 @@ export default function SettingsScreen() {
 
       <SectionTitle>Your data</SectionTitle>
       <Text style={[styles.muted, { marginBottom: spacing.md }]}>
-        Tally has no accounts or cloud sync. Everything is stored only on this phone, so deleting the app deletes your
+        Abacus has no accounts or cloud sync. Everything is stored only on this phone, so deleting the app deletes your
         budget. Save a backup file now and then, for example to iCloud Drive or Google Drive, so you can restore it on
         a new phone.
         {receipts.count > 0 &&

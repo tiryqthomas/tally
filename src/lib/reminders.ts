@@ -6,7 +6,7 @@ import type { Account, Bill } from './types';
 
 const CHANNEL_ID = 'bill-reminders';
 
-// Show reminders even when Tally is open.
+// Show reminders even when Abacus is open.
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowBanner: true,

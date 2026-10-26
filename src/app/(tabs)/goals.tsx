@@ -2,7 +2,8 @@ import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
-import { digits, Display, DisplayDigits, DisplayLabel, DisplayNote, Key, KeyLabel, PaperTape, PrintIn, tape, TickBar } from '@/components/machine';
+import { digits, Display, DisplayDigits, DisplayLabel, DisplayNote, Key, KeyLabel, PaperTape, PrintIn, tape } from '@/components/machine';
+import { AbacusRod } from '@/components/Abacus';
 import { colors, spacing } from '@/components/theme';
 import { SectionTitle, styles } from '@/components/ui';
 import { currentMonth, monthLabel, shortDateLabel } from '@/lib/dates';
@@ -102,7 +103,7 @@ function GoalTape({ progress: p, onPress }: { progress: GoalProgress; onPress: (
           <Text style={tape.text}>{digits(p.saved)}</Text>
           <Text style={tape.text}>of {digits(p.goal.price)}</Text>
         </View>
-        <TickBar fraction={p.goal.price > 0 ? p.saved / p.goal.price : 1} />
+        <AbacusRod fraction={p.goal.price > 0 ? p.saved / p.goal.price : 1} />
         <Text style={[tape.caption, ink]}>
           {behind ? `◆ ${plan}` : `${plan} ${p.status === 'saved' ? '*' : '+'}`}
         </Text>
