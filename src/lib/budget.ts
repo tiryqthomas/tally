@@ -168,3 +168,16 @@ function summarizeOne(data: BudgetData, month: Month, carry: Map<string, number>
 function sum(items: { amount: number }[]): number {
   return items.reduce((t, i) => t + i.amount, 0);
 }
+
+export type BillStatus = 'paid' | 'overdue' | 'due-today' | 'upcoming';
+
+// Identifies one due date of a bill, for marking it paid.
+export function billKey(billId: string, date: DateString): string {
+  return `${billId}:${date}`;
+}
+
+export function billStatus(billId: string, date: DateString, paid: ReadonlySet<string>, todayDate: DateString): BillStatus {
+  if (paid.has(billKey(billId, date))) return 'paid';
+  if (date < todayDate) return 'overdue';
+  return date === todayDate ? 'due-today' : 'upcoming';
+}

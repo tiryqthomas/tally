@@ -1,12 +1,13 @@
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 
+import { BillCard } from '@/components/BillCard';
 import { MonthCalendar } from '@/components/MonthCalendar';
-import { colors, spacing } from '@/components/theme';
-import { Button, Card, SectionTitle, styles } from '@/components/ui';
-import { billsInMonth } from '@/lib/budget';
-import { currentMonth, monthLabel, shortDateLabel, today } from '@/lib/dates';
+import { spacing } from '@/components/theme';
+import { Button, SectionTitle, styles } from '@/components/ui';
+import { billKey, billsInMonth } from '@/lib/budget';
+import { currentMonth, monthLabel, shortDateLabel } from '@/lib/dates';
 import { formatMoney } from '@/lib/money';
 import { useBudget } from '@/lib/store';
 import type { DateString } from '@/lib/types';
@@ -23,6 +24,8 @@ export default function BillsScreen() {
   const marked = useMemo(() => new Set(occurrences.map((o) => o.date)), [occurrences]);
   const shown = selected ? occurrences.filter((o) => o.date === selected) : occurrences;
   const total = occurrences.reduce((t, o) => t + o.bill.amount, 0);
+  const paidBills = useBudget((s) => s.paidBills);
+  const unpaid = occurrences.filter((o) => !paidBills.includes(billKey(o.bill.id, o.date)));
   const nameOf = (list: { id: string; name: string }[], id?: string) => list.find((x) => x.id === id)?.name;
 
   return (
@@ -44,29 +47,25 @@ export default function BillsScreen() {
         </Text>
         <Text style={styles.title}>{formatMoney(selected ? shown.reduce((t, o) => t + o.bill.amount, 0) : total)}</Text>
       </View>
+      {!selected && unpaid.length > 0 && (
+        <Text style={[styles.muted, { marginTop: spacing.xs }]}>
+          {unpaid.length} still to pay · {formatMoney(unpaid.reduce((t, o) => t + o.bill.amount, 0))}
+        </Text>
+      )}
 
       <SectionTitle>{selected ? 'Bills that day' : 'All bills this month'}</SectionTitle>
       {shown.length === 0 && <Text style={styles.muted}>No bills{selected ? ' on this day' : ' this month'}.</Text>}
-      {shown.map(({ bill, date }) => {
-        const paid = date <= today();
-        return (
-          <Pressable key={`${bill.id}${date}`} onPress={() => router.push({ pathname: '/bill', params: { id: bill.id } })}>
-            <Card>
-              <View style={styles.row}>
-                <Text style={styles.title}>{bill.name}</Text>
-                <Text style={styles.title}>{formatMoney(bill.amount)}</Text>
-              </View>
-              <Text style={styles.muted}>
-                {shortDateLabel(date)} · {nameOf(envelopes, bill.envelopeId) ?? 'No envelope'}
-                {bill.accountId ? ` · from ${nameOf(accounts, bill.accountId)}` : ''}
-              </Text>
-              <Text style={[styles.muted, { color: paid ? colors.accent : colors.warning, marginTop: 2 }]}>
-                {paid ? 'Paid' : 'Upcoming'}
-              </Text>
-            </Card>
-          </Pressable>
-        );
-      })}
+      {shown.map(({ bill, date }) => (
+        <BillCard
+          key={`${bill.id}${date}`}
+          bill={bill}
+          date={date}
+          detail={[nameOf(envelopes, bill.envelopeId), bill.accountId && `from ${nameOf(accounts, bill.accountId)}`]
+            .filter(Boolean)
+            .join(' · ')}
+          onPress={() => router.push({ pathname: '/bill', params: { id: bill.id } })}
+        />
+      ))}
 
       <View style={{ marginTop: spacing.md }}>
         <Button

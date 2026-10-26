@@ -1,14 +1,16 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
+import { useMemo } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { Fab } from '@/components/Fab';
 import { colors, spacing } from '@/components/theme';
 import { Card, ProgressBar, SectionTitle, styles } from '@/components/ui';
-import type { EnvelopeMonth } from '@/lib/budget';
-import { currentMonth, monthLabel } from '@/lib/dates';
+import { billsInMonth, billStatus, type EnvelopeMonth } from '@/lib/budget';
+import { currentMonth, monthLabel, today } from '@/lib/dates';
 import { useMonthSummary } from '@/lib/hooks';
 import { formatMoney } from '@/lib/money';
+import { useBudget } from '@/lib/store';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -16,6 +18,12 @@ export default function HomeScreen() {
   const summary = useMonthSummary(month);
   const savings = summary.envelopes.find((e) => e.envelope.isSavings);
   const others = summary.envelopes.filter((e) => !e.envelope.isSavings);
+  const bills = useBudget((s) => s.bills);
+  const paidBills = useBudget((s) => s.paidBills);
+  const overdue = useMemo(() => {
+    const paid = new Set(paidBills);
+    return billsInMonth(bills, month).filter((o) => billStatus(o.bill.id, o.date, paid, today()) === 'overdue');
+  }, [bills, paidBills, month]);
   const totalAvailable = summary.envelopes.reduce((t, e) => t + e.available, 0);
 
   return (
@@ -31,6 +39,19 @@ export default function HomeScreen() {
               {savings?.envelope.name ?? 'savings'} started this month below zero. Lower a limit to fix it.
             </Text>
           </Card>
+        )}
+
+        {overdue.length > 0 && (
+          <Pressable onPress={() => router.push('/bills')}>
+            <Card style={{ marginTop: spacing.sm, backgroundColor: colors.dangerSoft }}>
+              <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+                <Ionicons name="calendar" size={20} color={colors.danger} />
+                <Text style={[styles.body, { flex: 1 }]}>
+                  Not marked paid yet: {overdue.map((o) => o.bill.name).join(', ')}. Tap to review your bills.
+                </Text>
+              </View>
+            </Card>
+          </Pressable>
         )}
 
         {summary.totalCovered > 0 && (

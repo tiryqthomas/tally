@@ -28,6 +28,8 @@ The rules live in `src/lib/budget.ts` and are covered by tests (`npm test`).
 - Leftover money rolls into the same envelope next month, and so does a negative Savings / Discretionary balance.
 - Income is one monthly number, and a change applies from the current month on. Hourly pay is estimated as rate × hours per week × 52 ÷ 12.
 - The budget month always starts on the 1st.
+- Each due date of a bill can be marked paid. Unpaid bills past their date show as overdue, and reminders (Settings → Bill reminders) go out at 9am for unpaid bills.
+- Settings → Your data can save a backup file and restore it, since nothing is synced to the cloud.
 
 ## Project layout
 

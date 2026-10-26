@@ -2,11 +2,16 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
 import { colors } from '@/components/theme';
-import { useHydrated } from '@/lib/hooks';
+import { useHydrated, useReminderSync } from '@/lib/hooks';
+import { useBudget } from '@/lib/store';
 
 export default function RootLayout() {
+  const hydrated = useHydrated();
+  const onboarded = useBudget((s) => s.onboarded);
+  useReminderSync(hydrated && onboarded);
+
   // Wait for saved data so first-launch setup doesn't flash for returning users.
-  if (!useHydrated()) return null;
+  if (!hydrated) return null;
 
   return (
     <>

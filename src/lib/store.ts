@@ -2,13 +2,15 @@ import Storage from './storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
+import { migrateState, STATE_VERSION, type SavedState } from './backup';
+import { billKey } from './budget';
 import { currentMonth, today } from './dates';
-import type { Account, Bill, BudgetData, Envelope, Expense, Income, Month, Transfer } from './types';
+import type { ReminderSetting } from './reminderPlan';
+import type { Account, Bill, BudgetData, DateString, Envelope, Expense, Income, Transfer } from './types';
 
 const newId = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
 
-interface BudgetState extends BudgetData {
-  onboarded: boolean;
+interface BudgetState extends SavedState {
   // Changes income from the current month onward.
   setIncome: (income: Income) => void;
   // The Savings / Discretionary envelope is created automatically.
@@ -26,11 +28,18 @@ interface BudgetState extends BudgetData {
   deleteBill: (id: string) => void;
   addAccount: (name: string) => void;
   deleteAccount: (id: string) => void;
+  // Marks one due date of a bill paid, or unpaid if it already was.
+  togglePaid: (billId: string, date: DateString) => void;
+  setReminders: (setting: ReminderSetting) => void;
+  // Replaces everything with a restored backup.
+  restore: (state: SavedState) => void;
   resetAll: () => void;
 }
 
-const empty = (): BudgetData & { onboarded: boolean } => ({
+const empty = (): SavedState => ({
   onboarded: false,
+  paidBills: [],
+  reminders: 'day-before',
   incomes: [],
   envelopes: [],
   expenses: [],
@@ -110,7 +119,7 @@ export const useBudget = create<BudgetState>()(
       saveBill: ({ id, ...bill }) =>
         set((s) =>
           id
-            ? { bills: s.bills.map((b) => (b.id === id ? { ...bill, id } : b)) }
+            ? { bills: s.bills.map((b) => (b.id === id ? { ...b, ...bill, id } : b)) }
             : { bills: [...s.bills, { ...bill, id: newId() }] },
         ),
 
@@ -124,24 +133,33 @@ export const useBudget = create<BudgetState>()(
           bills: s.bills.map((b) => (b.accountId === id ? { ...b, accountId: undefined } : b)),
         })),
 
+      togglePaid: (billId, date) =>
+        set((s) => {
+          const key = billKey(billId, date);
+          return {
+            paidBills: s.paidBills.includes(key) ? s.paidBills.filter((k) => k !== key) : [...s.paidBills, key],
+          };
+        }),
+
+      setReminders: (reminders) => set({ reminders }),
+
+      restore: (state) => set({ ...empty(), ...state }),
+
       resetAll: () => set(empty()),
     }),
     {
       name: 'tally-budget',
-      version: 2,
+      version: STATE_VERSION,
       storage: createJSONStorage(() => Storage),
-      migrate: (persisted, version) => {
-        const state = persisted as Record<string, unknown>;
-        // v1 kept a single income; v2 keeps a history of income changes.
-        if (version < 2 && state.income) {
-          state.incomes = [{ fromMonth: state.startMonth as Month, income: state.income as Income }];
-          delete state.income;
-        }
-        return state as unknown as BudgetState;
-      },
+      migrate: (persisted, version) => migrateState(persisted as Record<string, unknown>, version) as BudgetState,
     },
   ),
 );
+
+// Everything that gets saved, without the actions. Used for backups.
+export function selectSaved(s: BudgetState): SavedState {
+  return { ...selectData(s), onboarded: s.onboarded, paidBills: s.paidBills, reminders: s.reminders };
+}
 
 // Everything the budget math needs, without the actions.
 export function selectData(s: BudgetState): BudgetData {

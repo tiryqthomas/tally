@@ -2,10 +2,11 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 
+import { BillCard } from '@/components/BillCard';
 import { colors, spacing } from '@/components/theme';
 import { Button, Card, Field, SectionTitle, styles } from '@/components/ui';
 import { billsInMonth, summarizeMonths } from '@/lib/budget';
-import { currentMonth, monthLabel, monthOf, shortDateLabel, today } from '@/lib/dates';
+import { currentMonth, monthLabel, monthOf, shortDateLabel } from '@/lib/dates';
 import { useBudgetData, useMonthSummary } from '@/lib/hooks';
 import { formatMoney, parseMoney } from '@/lib/money';
 import { useBudget } from '@/lib/store';
@@ -135,17 +136,13 @@ export default function EnvelopeDetail() {
           <>
             <SectionTitle>Bills this month</SectionTitle>
             {monthBills.map(({ bill, date }) => (
-              <Pressable key={`${bill.id}${date}`} onPress={() => router.push({ pathname: '/bill', params: { id: bill.id } })}>
-                <Card>
-                  <View style={styles.row}>
-                    <Text style={styles.body}>
-                      {bill.name} · {shortDateLabel(date)}
-                    </Text>
-                    <Text style={styles.body}>{formatMoney(bill.amount)}</Text>
-                  </View>
-                  <Text style={styles.muted}>{date <= today() ? 'Paid' : 'Set aside, not due yet'}</Text>
-                </Card>
-              </Pressable>
+              <BillCard
+                key={`${bill.id}${date}`}
+                bill={bill}
+                date={date}
+                detail="Set aside on the 1st"
+                onPress={() => router.push({ pathname: '/bill', params: { id: bill.id } })}
+              />
             ))}
           </>
         )}
