@@ -1,12 +1,12 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { colors, spacing } from '@/components/theme';
 import { Button, Card, Field, SectionTitle, styles } from '@/components/ui';
-import { billsInMonth } from '@/lib/budget';
+import { billsInMonth, summarizeMonths } from '@/lib/budget';
 import { currentMonth, monthLabel, monthOf, shortDateLabel, today } from '@/lib/dates';
-import { useMonthSummary } from '@/lib/hooks';
+import { useBudgetData, useMonthSummary } from '@/lib/hooks';
 import { formatMoney, parseMoney } from '@/lib/money';
 import { useBudget } from '@/lib/store';
 
@@ -15,6 +15,18 @@ export default function EnvelopeDetail() {
   const router = useRouter();
   const month = currentMonth();
   const summary = useMonthSummary(month);
+  const data = useBudgetData();
+  // Month-by-month ending balances, newest first, for the savings history.
+  const history = useMemo(
+    () =>
+      summarizeMonths(data, month)
+        .flatMap((m) => {
+          const e = m.envelopes.find((x) => x.envelope.id === id);
+          return e ? [{ month: m.month, start: e.rollover, end: e.available }] : [];
+        })
+        .reverse(),
+    [data, month, id],
+  );
   const row = summary.envelopes.find((e) => e.envelope.id === id);
   const expenses = useBudget((s) => s.expenses);
   const bills = useBudget((s) => s.bills);
@@ -48,7 +60,7 @@ export default function EnvelopeDetail() {
       return;
     }
     renameEnvelope(envelope.id, name.trim());
-    if (cents !== row!.limit) setEnvelopeLimit(envelope.id, cents);
+    if (!envelope.isSavings && cents !== row!.limit) setEnvelopeLimit(envelope.id, cents);
     setEditing(false);
   }
 
@@ -70,14 +82,16 @@ export default function EnvelopeDetail() {
     );
   }
 
+  const limitLabel = envelope.isSavings ? 'Left over from income' : 'Monthly limit';
   const lines: [string, number][] = [
-    ['Monthly limit', row.limit],
+    [limitLabel, row.limit],
     ['Rolled over from last month', row.rollover],
     ['Moved in', row.transfersIn],
     ['Moved out', -row.transfersOut],
     ['Bills set aside', -row.billsSetAside],
     ['Spent', -row.spent],
     ['Covered by savings', row.coveredBySavings],
+    ['Covered other envelopes', envelope.isSavings ? -summary.totalCovered : 0],
   ];
 
   return (
@@ -88,13 +102,14 @@ export default function EnvelopeDetail() {
         <Text style={[styles.big, row.available < 0 && { color: colors.danger }]}>{formatMoney(row.available)}</Text>
         {envelope.isSavings && (
           <Text style={[styles.muted, { marginTop: spacing.xs }]}>
-            When another envelope runs out, the difference comes out of this one.
+            Gets whatever income your other envelopes don't use. When another envelope runs out, the difference comes
+            out of this one. The balance carries from month to month.
           </Text>
         )}
 
         <Card style={{ marginTop: spacing.md }}>
           {lines
-            .filter(([label, v]) => v !== 0 || label === 'Monthly limit' || label === 'Spent')
+            .filter(([label, v]) => v !== 0 || label === limitLabel || label === 'Spent')
             .map(([label, v]) => (
               <View key={label} style={[styles.row, { paddingVertical: 4 }]}>
                 <Text style={styles.body}>{label}</Text>
@@ -158,17 +173,50 @@ export default function EnvelopeDetail() {
         ))}
         {monthExpenses.length > 0 && <Text style={styles.muted}>Press and hold an expense to delete it.</Text>}
 
+        {envelope.isSavings && (
+          <>
+            <SectionTitle>Savings over time</SectionTitle>
+            <Card>
+              {history.map((h, i) => {
+                const change = h.end - h.start;
+                return (
+                  <View key={h.month} style={[styles.row, { paddingVertical: 6 }]}>
+                    <Text style={styles.body}>
+                      {monthLabel(h.month)}
+                      {i === 0 ? ' (so far)' : ''}
+                    </Text>
+                    <Text style={[styles.body, h.end < 0 && { color: colors.danger }]}>
+                      {formatMoney(h.end)}
+                      <Text style={[styles.muted, { color: change < 0 ? colors.danger : colors.accent }]}>
+                        {'  '}
+                        {change >= 0 ? '+' : ''}
+                        {formatMoney(change, { showCents: false })}
+                      </Text>
+                    </Text>
+                  </View>
+                );
+              })}
+            </Card>
+          </>
+        )}
+
         <SectionTitle>Envelope settings</SectionTitle>
         {editing ? (
           <>
             <Field label="Name" value={name} onChangeText={setName} />
-            <Field label="Monthly limit ($), from this month on" value={limit} onChangeText={setLimit} keyboardType="decimal-pad" />
+            {!envelope.isSavings && (
+              <Field label="Monthly limit ($), from this month on" value={limit} onChangeText={setLimit} keyboardType="decimal-pad" />
+            )}
             <Button title="Save" onPress={saveEdits} />
             <Button title="Cancel" variant="secondary" onPress={() => setEditing(false)} />
           </>
         ) : (
           <>
-            <Button title="Edit name or limit" variant="secondary" onPress={() => setEditing(true)} />
+            <Button
+              title={envelope.isSavings ? 'Rename' : 'Edit name or limit'}
+              variant="secondary"
+              onPress={() => setEditing(true)}
+            />
             {!envelope.isSavings && <Button title="Remove envelope" variant="danger" onPress={confirmArchive} />}
           </>
         )}

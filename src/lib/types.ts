@@ -15,7 +15,8 @@ export interface Envelope {
   // The limit in effect for a month is the latest change at or before it,
   // so editing a limit never rewrites past months.
   limits: LimitChange[];
-  // The one envelope that covers every other envelope's shortfall.
+  // The one envelope that covers every other envelope's shortfall. Its monthly
+  // amount is always income minus every other limit, so its `limits` are unused.
   isSavings: boolean;
   createdMonth: Month;
   archivedMonth?: Month;
@@ -62,8 +63,15 @@ export type Income =
   | { mode: 'salary'; monthly: number }
   | { mode: 'hourly'; hourlyRate: number; hoursPerWeek: number };
 
-export interface BudgetData {
+export interface IncomeChange {
+  fromMonth: Month;
   income: Income;
+}
+
+export interface BudgetData {
+  // Income in effect for a month is the latest change at or before it,
+  // so a raise never rewrites past months' savings.
+  incomes: IncomeChange[];
   envelopes: Envelope[];
   expenses: Expense[];
   bills: Bill[];

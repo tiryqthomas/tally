@@ -1,6 +1,6 @@
 import { dateInMonth, daysInMonth, monthOf, monthsBetween, weekdayOf } from './dates';
 import { estimateMonthlyFromHourly } from './money';
-import type { Bill, BudgetData, DateString, Envelope, Income, Month } from './types';
+import type { Bill, BudgetData, DateString, Envelope, Income, IncomeChange, Month } from './types';
 
 export function monthlyIncome(income: Income): number {
   return income.mode === 'salary'
@@ -8,16 +8,23 @@ export function monthlyIncome(income: Income): number {
     : estimateMonthlyFromHourly(income.hourlyRate, income.hoursPerWeek);
 }
 
-export function limitFor(envelope: Envelope, month: Month): number {
-  let amount = 0;
-  let from = '';
-  for (const change of envelope.limits) {
-    if (change.fromMonth <= month && change.fromMonth >= from) {
-      amount = change.amount;
-      from = change.fromMonth;
-    }
+// Picks the change in effect for a month: the latest one at or before it,
+// or the earliest one when the month comes before all of them.
+function inEffect<T extends { fromMonth: Month }>(changes: T[], month: Month): T | undefined {
+  let found: T | undefined;
+  for (const change of changes) {
+    if (change.fromMonth <= month && (!found || change.fromMonth >= found.fromMonth)) found = change;
   }
-  return amount;
+  return found;
+}
+
+export function limitFor(envelope: Envelope, month: Month): number {
+  return inEffect(envelope.limits, month)?.amount ?? 0;
+}
+
+export function incomeFor(incomes: IncomeChange[], month: Month): Income {
+  const sorted = [...incomes].sort((a, b) => a.fromMonth.localeCompare(b.fromMonth));
+  return (inEffect(sorted, month) ?? sorted[0])?.income ?? { mode: 'salary', monthly: 0 };
 }
 
 export function isActive(envelope: Envelope, month: Month): boolean {
@@ -80,7 +87,9 @@ export interface MonthSummary {
   month: Month;
   envelopes: EnvelopeMonth[];
   income: number;
-  unassigned: number;
+  // How far the other envelopes' limits go past income. When above zero,
+  // Savings / Discretionary starts the month below zero by this much.
+  overAssigned: number;
   // Total pulled out of Savings/Discretionary to cover other envelopes.
   totalCovered: number;
 }
@@ -88,24 +97,33 @@ export interface MonthSummary {
 // Walks every month from the budget's start so leftover (or negative savings)
 // rolls into the next month, then returns the requested month.
 export function summarizeMonth(data: BudgetData, month: Month): MonthSummary {
-  let carry = new Map<string, number>();
-  let result: MonthSummary | null = null;
+  const all = summarizeMonths(data, month);
+  return all[all.length - 1];
+}
 
-  const start = data.startMonth <= month ? data.startMonth : month;
-  for (const m of monthsBetween(start, month)) {
-    result = summarizeOne(data, m, carry);
+// Every month from the budget's start through `end`, oldest first.
+export function summarizeMonths(data: BudgetData, end: Month): MonthSummary[] {
+  let carry = new Map<string, number>();
+  const out: MonthSummary[] = [];
+  const start = data.startMonth <= end ? data.startMonth : end;
+  for (const m of monthsBetween(start, end)) {
+    const result = summarizeOne(data, m, carry);
     carry = new Map(result.envelopes.map((e) => [e.envelope.id, e.available]));
+    out.push(result);
   }
-  return result!;
+  return out;
 }
 
 function summarizeOne(data: BudgetData, month: Month, carry: Map<string, number>): MonthSummary {
   const active = data.envelopes.filter((e) => isActive(e, month));
   const bills = billsInMonth(data.bills, month);
+  const income = monthlyIncome(incomeFor(data.incomes, month));
+  const otherLimits = active.filter((e) => !e.isSavings).reduce((t, e) => t + limitFor(e, month), 0);
 
   const rows: EnvelopeMonth[] = active.map((envelope) => {
     const id = envelope.id;
-    const limit = limitFor(envelope, month);
+    // Savings / Discretionary gets whatever income the other envelopes don't.
+    const limit = envelope.isSavings ? income - otherLimits : limitFor(envelope, month);
     const rollover = carry.get(id) ?? 0;
     const spent = sum(data.expenses.filter((x) => x.envelopeId === id && monthOf(x.date) === month));
     const billsSetAside = sum(bills.filter((b) => b.bill.envelopeId === id).map((b) => b.bill));
@@ -138,12 +156,11 @@ function summarizeOne(data: BudgetData, month: Month, carry: Map<string, number>
     }
   }
 
-  const income = monthlyIncome(data.income);
   return {
     month,
     envelopes: rows,
     income,
-    unassigned: income - rows.reduce((t, r) => t + r.limit, 0),
+    overAssigned: Math.max(0, otherLimits - income),
     totalCovered,
   };
 }
