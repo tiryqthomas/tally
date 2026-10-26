@@ -40,7 +40,7 @@ export default function EnvelopeDetail() {
   if (!row) {
     return (
       <View style={[styles.screen, { padding: spacing.md }]}>
-        <Text style={styles.body}>This envelope no longer exists.</Text>
+        <Text style={styles.body}>This category no longer exists.</Text>
       </View>
     );
   }
@@ -92,7 +92,7 @@ export default function EnvelopeDetail() {
     ['Bills set aside', -row.billsSetAside],
     ['Spent', -row.spent],
     ['Covered by savings', row.coveredBySavings],
-    ['Covered other envelopes', envelope.isSavings ? -summary.totalCovered : 0],
+    ['Covered other categories', envelope.isSavings ? -summary.totalCovered : 0],
   ];
 
   return (
@@ -103,7 +103,7 @@ export default function EnvelopeDetail() {
         <Text style={[styles.big, row.available < 0 && { color: colors.danger }]}>{formatMoney(row.available)}</Text>
         {envelope.isSavings && (
           <Text style={[styles.muted, { marginTop: spacing.xs }]}>
-            Gets whatever income your other envelopes don't use. When another envelope runs out, the difference comes
+            Gets whatever income your other categories don't use. When another category runs out, the difference comes
             out of this one. The balance carries from month to month.
           </Text>
         )}
@@ -198,7 +198,7 @@ export default function EnvelopeDetail() {
           </>
         )}
 
-        <SectionTitle>Envelope settings</SectionTitle>
+        <SectionTitle>Category settings</SectionTitle>
         {editing ? (
           <>
             <Field label="Name" value={name} onChangeText={setName} />
@@ -215,7 +215,7 @@ export default function EnvelopeDetail() {
               variant="secondary"
               onPress={() => setEditing(true)}
             />
-            {!envelope.isSavings && <Button title="Remove envelope" variant="danger" onPress={confirmArchive} />}
+            {!envelope.isSavings && <Button title="Remove category" variant="danger" onPress={confirmArchive} />}
           </>
         )}
       </ScrollView>

@@ -5,6 +5,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import { migrateState, STATE_VERSION, type SavedState } from './backup';
 import { billKey } from './budget';
 import { currentMonth, today } from './dates';
+import type { HomeChart } from './homeCharts';
 import type { ReminderSetting } from './reminderPlan';
 import type { Account, Bill, BudgetData, DateString, Envelope, Expense, Income, Transfer } from './types';
 
@@ -15,7 +16,8 @@ interface BudgetState extends SavedState {
   setIncome: (income: Income) => void;
   // The Savings / Discretionary envelope is created automatically.
   finishOnboarding: (income: Income, envelopes: { name: string; limit: number }[]) => void;
-  addEnvelope: (name: string, limit: number) => void;
+  // Returns the new envelope's id.
+  addEnvelope: (name: string, limit: number) => string;
   renameEnvelope: (id: string, name: string) => void;
   // Changes the limit from the current month onward.
   setEnvelopeLimit: (id: string, limit: number) => void;
@@ -31,6 +33,7 @@ interface BudgetState extends SavedState {
   // Marks one due date of a bill paid, or unpaid if it already was.
   togglePaid: (billId: string, date: DateString) => void;
   setReminders: (setting: ReminderSetting) => void;
+  setHomeChart: (chart: HomeChart) => void;
   // Replaces everything with a restored backup.
   restore: (state: SavedState) => void;
   resetAll: () => void;
@@ -40,6 +43,7 @@ const empty = (): SavedState => ({
   onboarded: false,
   paidBills: [],
   reminders: 'day-before',
+  homeChart: 'pace',
   incomes: [],
   envelopes: [],
   expenses: [],
@@ -81,8 +85,11 @@ export const useBudget = create<BudgetState>()(
           ],
         }),
 
-      addEnvelope: (name, limit) =>
-        set((s) => ({ envelopes: [...s.envelopes, makeEnvelope(name, limit)] })),
+      addEnvelope: (name, limit) => {
+        const envelope = makeEnvelope(name, limit);
+        set((s) => ({ envelopes: [...s.envelopes, envelope] }));
+        return envelope.id;
+      },
 
       renameEnvelope: (id, name) =>
         set((s) => ({ envelopes: s.envelopes.map((e) => (e.id === id ? { ...e, name } : e)) })),
@@ -142,6 +149,7 @@ export const useBudget = create<BudgetState>()(
         }),
 
       setReminders: (reminders) => set({ reminders }),
+      setHomeChart: (homeChart) => set({ homeChart }),
 
       restore: (state) => set({ ...empty(), ...state }),
 
@@ -158,7 +166,13 @@ export const useBudget = create<BudgetState>()(
 
 // Everything that gets saved, without the actions. Used for backups.
 export function selectSaved(s: BudgetState): SavedState {
-  return { ...selectData(s), onboarded: s.onboarded, paidBills: s.paidBills, reminders: s.reminders };
+  return {
+    ...selectData(s),
+    onboarded: s.onboarded,
+    paidBills: s.paidBills,
+    reminders: s.reminders,
+    homeChart: s.homeChart,
+  };
 }
 
 // Everything the budget math needs, without the actions.

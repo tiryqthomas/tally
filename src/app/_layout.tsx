@@ -48,7 +48,7 @@ export default function RootLayout() {
         <Stack.Screen name="add-expense" options={{ presentation: 'modal', title: 'Log spending' }} />
         <Stack.Screen name="bill" options={{ presentation: 'modal', title: 'Bill' }} />
         <Stack.Screen name="move-money" options={{ presentation: 'modal', title: 'Move money' }} />
-        <Stack.Screen name="new-envelope" options={{ presentation: 'modal', title: 'New envelope' }} />
+        <Stack.Screen name="new-envelope" options={{ presentation: 'modal', title: 'New category' }} />
       </Stack>
     </>
   );

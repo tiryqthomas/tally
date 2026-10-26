@@ -26,7 +26,7 @@ export default function MoveMoney() {
   function save() {
     const cents = parseMoney(amount);
     if (!fromId || !toId || fromId === toId || !cents) {
-      Alert.alert('Pick two different envelopes and an amount.');
+      Alert.alert('Pick two different categories and an amount.');
       return;
     }
     moveMoney({ fromEnvelopeId: fromId, toEnvelopeId: toId, amount: cents });
@@ -35,7 +35,7 @@ export default function MoveMoney() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={{ padding: spacing.md }} keyboardShouldPersistTaps="handled">
-      <Text style={styles.muted}>Moves money for this month only, like taking cash from one envelope and putting it in another.</Text>
+      <Text style={styles.muted}>Moves money for this month only, like taking cash from one category and putting it in another.</Text>
       <SectionTitle>From</SectionTitle>
       <Chips options={options} value={fromId} onChange={setFromId} />
       <SectionTitle>To</SectionTitle>

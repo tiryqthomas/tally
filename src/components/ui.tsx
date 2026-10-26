@@ -52,10 +52,13 @@ export function Chips<T extends string>({
   options,
   value,
   onChange,
+  trailing,
 }: {
   options: { value: T; label: string }[];
   value: T | undefined;
   onChange: (value: T) => void;
+  // Shown after the last chip, e.g. a button to add an option.
+  trailing?: ReactNode;
 }) {
   return (
     <View style={styles.chips}>
@@ -73,6 +76,7 @@ export function Chips<T extends string>({
           </Pressable>
         );
       })}
+      {trailing}
     </View>
   );
 }

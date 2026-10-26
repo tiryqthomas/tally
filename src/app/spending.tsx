@@ -42,7 +42,7 @@ export default function SpendingScreen() {
         <SpendLineChart points={points} budget={pace.budget} days={days} month={month} height={180} />
       </Card>
 
-      <SectionTitle>By envelope</SectionTitle>
+      <SectionTitle>By category</SectionTitle>
       <Card>
         {byEnvelope.length === 0 ? (
           <Text style={styles.muted}>Nothing logged this month.</Text>
