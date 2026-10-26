@@ -1,18 +1,37 @@
 import { StyleSheet, Text } from 'react-native';
 
 import { Key } from './machine';
-import { fonts } from './theme';
+import { colors, fonts } from './theme';
 
-// The big red "−=" key that opens Log spending, pinned to the bottom of the screen.
+// The ink "−=" button that opens Log spending, pinned to the bottom of the screen.
 export function Fab({ onPress, label = 'Log spending' }: { onPress: () => void; label?: string }) {
   return (
-    <Key color="red" onPress={onPress} accessibilityLabel={label} style={styles.fab}>
-      <Text style={styles.text}>−=  {label}</Text>
+    <Key onPress={onPress} accessibilityLabel={label} style={styles.fab}>
+      <Text style={styles.text}>
+        <Text style={styles.sign}>−= </Text>
+        {label}
+      </Text>
     </Key>
   );
 }
 
 const styles = StyleSheet.create({
-  fab: { position: 'absolute', left: 20, right: 20, bottom: 16, alignItems: 'center', minHeight: 56, justifyContent: 'center' },
-  text: { fontFamily: fonts.bold, fontSize: 17, letterSpacing: 1.6, color: '#fff', textTransform: 'uppercase' },
+  fab: {
+    position: 'absolute',
+    left: 20,
+    right: 20,
+    bottom: 16,
+    alignItems: 'center',
+    minHeight: 54,
+    justifyContent: 'center',
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
+  },
+  text: { fontFamily: fonts.bold, fontSize: 16, color: '#fff' },
+  // The calculator's minus-equals sign, kept as a small nod in the accent's light tint.
+  sign: { fontFamily: fonts.monoBold, color: colors.accentSoft },
 });

@@ -10,8 +10,6 @@ import {
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
-import Svg, { Polygon } from 'react-native-svg';
-
 import { formatMoney } from '@/lib/money';
 import { colors, fonts, machine, motion, radius, spacing, type } from './theme';
 
@@ -30,20 +28,20 @@ export const motionAllowed = () => !reduceMotion;
 
 type KeyColor = 'grey' | 'light' | 'blue' | 'red' | 'yellow';
 
-// face, the darker bottom edge, a lighter top lip that makes the key look domed, and the legend color.
-const KEY: Record<KeyColor, { face: string; edge: string; lip: string; text: string }> = {
-  grey: { face: machine.key, edge: machine.keyEdge, lip: '#666A71', text: '#FFFFFF' },
-  light: { face: machine.keyLight, edge: machine.keyLightEdge, lip: '#E4E1DA', text: colors.text },
-  blue: { face: machine.blue, edge: machine.blueEdge, lip: '#7186C6', text: '#FFFFFF' },
-  red: { face: machine.red, edge: machine.redEdge, lip: '#D85A4F', text: '#FFFFFF' },
-  yellow: { face: machine.yellow, edge: machine.yellowEdge, lip: '#F0C565', text: '#2A2005' },
+// Face, hairline edge and legend color. Keys are flat: solid ink, white with a hairline, spruce, red or amber.
+const KEY: Record<KeyColor, { face: string; edge: string; text: string }> = {
+  grey: { face: machine.key, edge: machine.keyEdge, text: '#FFFFFF' },
+  light: { face: machine.keyLight, edge: machine.keyLightEdge, text: colors.text },
+  blue: { face: machine.blue, edge: machine.blueEdge, text: '#FFFFFF' },
+  red: { face: machine.red, edge: machine.redEdge, text: '#FFFFFF' },
+  yellow: { face: machine.yellow, edge: machine.yellowEdge, text: '#4A3A12' },
 };
 
 export function keyColors(color: KeyColor) {
   return KEY[color];
 }
 
-// A chunky calculator key. It sinks a little when pressed.
+// A flat key. It dims a little when pressed.
 export function Key({
   color = 'grey',
   onPress,
@@ -68,8 +66,7 @@ export function Key({
       disabled={disabled || !onPress}
       style={({ pressed }) => [
         styles.key,
-        { backgroundColor: k.face, borderBottomColor: k.edge, borderTopColor: k.lip },
-        // A transform moves only this key; changing its margin would nudge the whole row.
+        { backgroundColor: k.face, borderColor: k.edge },
         pressed && styles.keyPressed,
         disabled && { opacity: 0.45 },
         style,
@@ -86,12 +83,15 @@ export function KeyLabel({ color = 'grey', label, value }: { color?: KeyColor; l
   return (
     <>
       <Text style={[styles.keyLabel, { color: text }]}>{label}</Text>
-      {value !== undefined && <Text style={[styles.keyValue, { color: text }]}>{value}</Text>}
+      {value !== undefined && (
+        // Amounts print in the typewriter mono, words in the sans.
+        <Text style={[styles.keyValue, !/^[−-]?\$?[\d,.]+$/.test(value) && styles.keyWords, { color: text }]}>{value}</Text>
+      )}
     </>
   );
 }
 
-// The dark window with glowing blue digits.
+// The headline readout: a big typewriter-style amount with a label and a note. No box, just ink on paper.
 export function Display({ children, style }: { children: ReactNode; style?: ViewStyle }) {
   return <View style={[styles.display, style]}>{children}</View>;
 }
@@ -130,38 +130,54 @@ function useRolling(text: string, roll: boolean): string {
   return shown;
 }
 
+// A number (typed or formatted) splits into sign, dollars and cents so the cents can be printed smaller.
+const NUMBER = /^(-?)([\d,]*)(\.\d*)?$/;
+
 export function DisplayDigits({
   children,
   size = type.hero.fontSize,
   roll = false,
+  align = 'left',
   accessibilityLabel,
 }: {
   children: string;
   size?: number;
   roll?: boolean;
+  align?: 'left' | 'center';
   accessibilityLabel?: string;
 }) {
   const shown = useRolling(children, roll);
+  const parts = NUMBER.exec(shown);
+  const small = { fontSize: size * 0.55, color: colors.muted };
   return (
     <Text
-      style={[styles.digits, { fontSize: size, lineHeight: size * 1.1 }]}
+      style={[styles.digits, { fontSize: size, lineHeight: size * 1.15, textAlign: align }]}
       numberOfLines={1}
       adjustsFontSizeToFit
       accessibilityLabel={accessibilityLabel ?? (MONEY.test(children) ? `$${children}` : children)}
     >
-      {shown}
+      {parts ? (
+        <>
+          {parts[1] && '−'}
+          <Text style={small}>$</Text>
+          {parts[2] || '0'}
+          {parts[3] !== undefined && <Text style={small}>{parts[3]}</Text>}
+        </>
+      ) : (
+        shown
+      )}
     </Text>
   );
 }
 
-export function DisplayNote({ children }: { children: ReactNode }) {
-  return <Text style={styles.displayNote}>{children}</Text>;
+export function DisplayNote({ children, align = 'left' }: { children: ReactNode; align?: 'left' | 'center' }) {
+  return <Text style={[styles.displayNote, { textAlign: align }]}>{children}</Text>;
 }
 
 // True once a tape has been on screen for a moment, so only rows added after that "print" in.
 const TapeReady = createContext<{ current: boolean }>({ current: false });
 
-// A strip of receipt paper with a torn top edge.
+// A clean sheet, ruled like a receipt.
 export function PaperTape({ children, style }: { children: ReactNode; style?: ViewStyle }) {
   const ready = useRef(false);
   useEffect(() => {
@@ -170,19 +186,10 @@ export function PaperTape({ children, style }: { children: ReactNode; style?: Vi
   }, []);
   return (
     <TapeReady.Provider value={ready}>
-      <View style={[{ marginBottom: spacing.sm }, style]}>
-        <Svg width="100%" height={6} viewBox="0 0 100 6" preserveAspectRatio="none">
-          <Polygon points={TORN} fill={colors.card} />
-        </Svg>
-        <View style={styles.tape}>{children}</View>
-      </View>
+      <View style={[styles.tape, { marginBottom: spacing.sm }, style]}>{children}</View>
     </TapeReady.Provider>
   );
 }
-
-const TORN = Array.from({ length: 21 }, (_, i) => `${i * 5},${i % 2 ? 0 : 6}`)
-  .concat(['100,6', '0,6'])
-  .join(' ');
 
 // Wrap a tape row so that, when it's added to a tape already on screen, it feeds in like freshly printed paper.
 export function PrintIn({ children }: { children: ReactNode }) {
@@ -210,7 +217,7 @@ export function PrintIn({ children }: { children: ReactNode }) {
   );
 }
 
-// A printed progress bar: a row of little ink blocks. On first view the blocks print one by one.
+// A thin progress rule. On first view it draws in from the left.
 export function TickBar({ fraction, red, ticks = 24 }: { fraction: number; red?: boolean; ticks?: number }) {
   const filled = Math.round(Math.max(0, Math.min(1, fraction)) * ticks);
   const [shown, setShown] = useState(() => (motionAllowed() ? 0 : filled));
@@ -231,15 +238,13 @@ export function TickBar({ fraction, red, ticks = 24 }: { fraction: number; red?:
   }, [filled]);
   const ink = red ? colors.danger : colors.text;
   return (
-    <View style={styles.ticks} importantForAccessibility="no-hide-descendants">
-      {Array.from({ length: ticks }, (_, i) => (
-        <View key={i} style={[styles.tick, { backgroundColor: i < shown ? ink : colors.border }]} />
-      ))}
+    <View style={styles.track} importantForAccessibility="no-hide-descendants">
+      <View style={[styles.fill, { width: `${(shown / ticks) * 100}%`, backgroundColor: ink }]} />
     </View>
   );
 }
 
-// A warning printed on its own strip of tape in red ink, instead of a colored box.
+// A warning on its own sheet in red ink, instead of a colored box.
 export function TapeNote({ children, action, onPress }: { children: ReactNode; action?: string; onPress?: () => void }) {
   return (
     <Pressable onPress={onPress} disabled={!onPress} accessibilityRole={onPress ? 'button' : undefined}>
@@ -254,17 +259,18 @@ export function TapeNote({ children, action, onPress }: { children: ReactNode; a
   );
 }
 
-// Text styles for anything printed on the tape. Names are caps; supporting lines are sentence case.
+// Text styles for anything on a sheet: names in the sans, amounts in the typewriter mono.
 export const tape = StyleSheet.create({
   line: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.sm },
-  name: { fontFamily: fonts.monoBold, ...type.headline, color: colors.text } as TextStyle,
-  text: { fontFamily: fonts.mono, ...type.body, color: colors.text } as TextStyle,
-  caption: { fontFamily: fonts.mono, ...type.caption, color: colors.muted, marginTop: 4 } as TextStyle,
+  name: { fontFamily: fonts.label, ...type.body, color: colors.text } as TextStyle,
+  amount: { fontFamily: fonts.monoBold, ...type.body, color: colors.text, fontVariant: ['tabular-nums'] } as TextStyle,
+  text: { fontFamily: fonts.body, ...type.body, color: colors.text } as TextStyle,
+  caption: { fontFamily: fonts.body, ...type.caption, color: colors.muted, marginTop: 4 } as TextStyle,
   row: { paddingVertical: spacing.sm },
   total: {
     borderTopWidth: 1,
     borderStyle: 'dashed',
-    borderTopColor: colors.muted,
+    borderTopColor: colors.border,
     paddingTop: spacing.md - 4,
     marginTop: spacing.sm,
   },
@@ -273,58 +279,35 @@ export const tape = StyleSheet.create({
 const styles = StyleSheet.create({
   key: {
     borderRadius: radius.key,
-    borderBottomWidth: 4,
-    borderTopWidth: 1,
+    borderWidth: 1,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    shadowColor: '#000',
-    shadowOpacity: 0.22,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 3,
   },
-  keyPressed: { transform: [{ translateY: 3 }], shadowOpacity: 0.08, shadowRadius: 1, elevation: 1 },
-  keyLabel: { fontFamily: fonts.bold, ...type.label, textTransform: 'uppercase' },
-  keyValue: { fontFamily: fonts.display, fontSize: 22, lineHeight: 26, marginTop: 2 },
-  display: {
-    backgroundColor: machine.display,
-    borderRadius: radius.display,
-    padding: spacing.gutter,
-    borderWidth: 2,
-    borderColor: '#2B2F36',
-    // A faint light catch along the top of the glass.
-    borderTopColor: '#3A3F48',
-    shadowColor: '#000',
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 4,
-  },
-  displayLabel: { fontFamily: fonts.bold, ...type.label, color: machine.label, textTransform: 'uppercase' },
+  keyPressed: { opacity: 0.7 },
+  keyLabel: { fontFamily: fonts.label, ...type.label },
+  keyValue: { fontFamily: fonts.monoBold, fontSize: 20, lineHeight: 26, marginTop: 2 },
+  keyWords: { fontFamily: fonts.bold, fontSize: 18 },
+  display: { paddingVertical: spacing.sm },
+  displayLabel: { fontFamily: fonts.label, ...type.label, color: machine.label },
   digits: {
     fontFamily: fonts.display,
-    color: machine.digit,
-    textAlign: 'right',
-    letterSpacing: 1.5,
+    color: colors.text,
+    letterSpacing: -1,
     marginTop: spacing.xs,
-    textShadowColor: 'rgba(111,230,242,0.55)',
-    textShadowRadius: 6,
-    textShadowOffset: { width: 0, height: 0 },
+    fontVariant: ['tabular-nums'],
   },
-  displayNote: { fontFamily: fonts.display, fontSize: 13, color: machine.digitDim, textAlign: 'right', letterSpacing: 0.5 },
+  displayNote: { fontFamily: fonts.label, fontSize: 13, color: colors.accent },
   tape: {
     backgroundColor: colors.card,
-    paddingHorizontal: spacing.gutter,
-    paddingTop: spacing.md - 4,
-    paddingBottom: spacing.md,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.paper,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.sm,
   },
-  ticks: { flexDirection: 'row', gap: 2, marginTop: 6 },
-  tick: { flex: 1, height: 6 },
+  track: { height: 3, borderRadius: 2, backgroundColor: colors.border, overflow: 'hidden', marginTop: 6 },
+  fill: { height: 3 },
   noteInk: { color: colors.danger, marginTop: 0 },
-  noteAction: { color: colors.text, fontFamily: fonts.monoBold, marginTop: 0 },
+  noteAction: { color: colors.text, fontFamily: fonts.bold, marginTop: 0 },
 });

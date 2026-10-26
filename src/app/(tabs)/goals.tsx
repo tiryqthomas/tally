@@ -29,8 +29,8 @@ export default function GoalsScreen() {
       <Display>
         <DisplayLabel>Saved for goals</DisplayLabel>
         <DisplayDigits roll>{digits(saved)}</DisplayDigits>
-        <DisplayNote>{digits(perMonth)} / MO FROM SAVINGS</DisplayNote>
-        {savings && <DisplayNote>SAVINGS LEFT {digits(savings.available)}</DisplayNote>}
+        <DisplayNote>${digits(perMonth)} a month from savings</DisplayNote>
+        {savings && <DisplayNote>Savings left ${digits(savings.available)}</DisplayNote>}
       </Display>
 
       <Key color="light" style={{ marginTop: spacing.md }} onPress={() => router.push('/goal')} accessibilityLabel="Add a goal">
@@ -66,7 +66,7 @@ export default function GoalsScreen() {
                 style={[tape.line, tape.row]}
               >
                 <Text style={[tape.text, { flex: 1, color: colors.muted }]} numberOfLines={1}>
-                  {p.goal.name.toUpperCase()} · {monthLabel(p.goal.boughtMonth!)}
+                  {p.goal.name} · {monthLabel(p.goal.boughtMonth!)}
                 </Text>
                 <Text style={[tape.text, { color: colors.muted }]}>{digits(p.saved)} √</Text>
               </Pressable>
@@ -94,7 +94,7 @@ function GoalTape({ progress: p, onPress }: { progress: GoalProgress; onPress: (
       <PaperTape>
         <View style={tape.line}>
           <Text style={[tape.name, { flex: 1 }]} numberOfLines={1}>
-            {p.goal.name.toUpperCase()}
+            {p.goal.name}
           </Text>
           <Text style={[tape.caption, { marginTop: 0 }]}>by {target}</Text>
         </View>

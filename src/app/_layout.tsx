@@ -1,6 +1,5 @@
-import { BarlowSemiCondensed_500Medium, BarlowSemiCondensed_600SemiBold, BarlowSemiCondensed_700Bold, BarlowSemiCondensed_800ExtraBold_Italic } from '@expo-google-fonts/barlow-semi-condensed';
-import { IBMPlexMono_500Medium, IBMPlexMono_600SemiBold } from '@expo-google-fonts/ibm-plex-mono';
-import { ShareTechMono_400Regular } from '@expo-google-fonts/share-tech-mono';
+import { IBMPlexMono_400Regular, IBMPlexMono_500Medium } from '@expo-google-fonts/ibm-plex-mono';
+import { IBMPlexSans_400Regular, IBMPlexSans_500Medium, IBMPlexSans_600SemiBold, IBMPlexSans_700Bold } from '@expo-google-fonts/ibm-plex-sans';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { useEffect } from 'react';
@@ -15,13 +14,12 @@ import { useBudget } from '@/lib/store';
 export default function RootLayout() {
   const hydrated = useHydrated();
   const [fontsLoaded, fontError] = useFonts({
-    ShareTechMono_400Regular,
+    IBMPlexMono_400Regular,
     IBMPlexMono_500Medium,
-    IBMPlexMono_600SemiBold,
-    BarlowSemiCondensed_500Medium,
-    BarlowSemiCondensed_600SemiBold,
-    BarlowSemiCondensed_700Bold,
-    BarlowSemiCondensed_800ExtraBold_Italic,
+    IBMPlexSans_400Regular,
+    IBMPlexSans_500Medium,
+    IBMPlexSans_600SemiBold,
+    IBMPlexSans_700Bold,
   });
   const onboarded = useBudget((s) => s.onboarded);
   useReminderSync(hydrated && onboarded);

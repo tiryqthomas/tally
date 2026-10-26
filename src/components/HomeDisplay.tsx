@@ -9,7 +9,7 @@ import { SpendLineChart } from './charts';
 import { AllowanceBars, CategoryBars, IncomeBar, MonthCompareLines } from './DisplayCharts';
 import { digits, DisplayDigits, DisplayLabel, DisplayNote } from './machine';
 
-const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 'S'}`;
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
 // The headline number and chart on Home's display, for whichever chart is picked in Settings.
 export function HomeDisplay({
@@ -40,7 +40,7 @@ export function HomeDisplay({
         return {
           label: 'Safe to spend today',
           value: digits(a.perDay),
-          note: `${digits(a.left)} LEFT ÷ ${plural(a.daysLeft, 'DAY')}`,
+          note: `$${digits(a.left)} left ÷ ${plural(a.daysLeft, 'day')}`,
           body: <AllowanceBars allowance={a} />,
         };
       }
@@ -50,8 +50,8 @@ export function HomeDisplay({
         const ahead = rows.filter((r) => r.status === 'ahead').length;
         return {
           label: 'Categories this month',
-          value: over ? `${over} OVER` : ahead ? `${ahead} AHEAD` : 'ON TRACK',
-          note: `${ahead} AHEAD OF PACE · ${rows.length - over - ahead} ON TRACK`,
+          value: over ? `${over} over` : ahead ? `${ahead} ahead` : 'On track',
+          note: `${ahead} ahead of pace · ${rows.length - over - ahead} on track`,
           body: <CategoryBars rows={rows} elapsed={todayDay / days} />,
         };
       }
@@ -59,14 +59,14 @@ export function HomeDisplay({
         const c = compareWithLastMonth(data, month, todayDay);
         const now = c.now.at(-1)?.cumulative ?? 0;
         const diff = now - c.lastBySameDay;
-        const lastName = monthLabel(c.lastMonth).split(' ')[0].toUpperCase();
+        const lastName = monthLabel(c.lastMonth).split(' ')[0];
         return {
           label: `Spent by day ${todayDay}`,
           value: digits(now),
           note:
             c.lastBySameDay === 0 && (c.last.at(-1)?.cumulative ?? 0) === 0
-              ? `NOTHING LOGGED IN ${lastName}`
-              : `${digits(Math.abs(diff))} ${diff > 0 ? 'MORE' : 'LESS'} THAN ${lastName}`,
+              ? `Nothing logged in ${lastName}`
+              : `$${digits(Math.abs(diff))} ${diff > 0 ? 'more' : 'less'} than ${lastName}`,
           body: <MonthCompareLines compare={c} days={days} />,
         };
       }
@@ -75,7 +75,7 @@ export function HomeDisplay({
         return {
           label: `${monthLabel(month).split(' ')[0]} income`,
           value: digits(split.income),
-          note: 'BILLS · SPENT · LEFT · SAVINGS',
+          note: 'Bills · spent · left · savings',
           body: <IncomeBar split={split} />,
         };
       }
@@ -84,7 +84,7 @@ export function HomeDisplay({
         return {
           label: totalAvailable < 0 ? 'Over budget' : 'Left to spend',
           value: digits(totalAvailable),
-          note: `${pace.ahead > 0 ? `${digits(pace.ahead)} AHEAD OF PACE` : `${digits(-pace.ahead)} UNDER PACE`} · ${plural(daysLeft, 'DAY')} LEFT`,
+          note: `${pace.ahead > 0 ? `$${digits(pace.ahead)} ahead of pace` : `$${digits(-pace.ahead)} under pace`} · ${plural(daysLeft, 'day')} left`,
           body: (
             <SpendLineChart
               points={points}

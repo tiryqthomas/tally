@@ -29,11 +29,11 @@ export function SpendLineChart({
   month: Month;
   height?: number;
   interactive?: boolean;
-  // Drawn in glowing blue for the dark calculator display.
+  // Drawn in the accent ink for the readout at the top of Home.
   onDisplay?: boolean;
 }) {
   const ink = onDisplay
-    ? { line: machine.digit, pace: machine.digitDim, grid: machine.digitFaint, text: machine.digitDim, dotEdge: machine.display }
+    ? { line: machine.digit, pace: machine.digitDim, grid: machine.digitFaint, text: machine.digitDim, dotEdge: colors.background }
     : { line: chart.variable, pace: chart.pace, grid: chart.grid, text: colors.muted, dotEdge: '#fff' };
   const [width, setWidth] = useState(0);
   const [hover, setHover] = useState<number | null>(null);

@@ -12,7 +12,7 @@ const TOP = 14;
 const BOTTOM = 18;
 const PLOT = HEIGHT - TOP - BOTTOM;
 
-const short = (m: string) => monthLabel(m).slice(0, 3).toUpperCase();
+const short = (m: string) => monthLabel(m).slice(0, 3);
 const used = (u: MonthUse) => u.spent + u.bills;
 
 // Past months as bars with the limit as a line that can be dragged up and down.
@@ -142,7 +142,7 @@ export function LimitChart({
                 fill={INK.dim}
                 {...FONT}
               >
-                {`AVG ${shortDollars(history.average)}`}
+                {`Avg ${shortDollars(history.average)}`}
               </SvgText>
             </>
           )}
@@ -174,7 +174,7 @@ export function LimitChart({
           </SvgText>
           {history.past.length === 0 && (
             <SvgText x={0} y={TOP} fill={INK.dim} {...FONT}>
-              NO PAST MONTHS YET
+              No past months yet
             </SvgText>
           )}
         </Svg>

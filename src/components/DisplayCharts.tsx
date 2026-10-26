@@ -7,19 +7,19 @@ import { monthLabel } from '@/lib/dates';
 import { digits } from './machine';
 import { fonts, machine } from './theme';
 
-// Charts drawn in glowing blue for the dark display at the top of Home.
+// Charts drawn in ink and spruce for the readout at the top of Home.
 
 export const INK = {
   line: machine.digit,
   dim: machine.digitDim,
   faint: machine.digitFaint,
   red: machine.digitRed,
-  yellow: machine.yellow,
+  yellow: machine.yellowEdge,
   blue: machine.digitBlue,
   white: machine.digitWhite,
 };
 
-export const FONT = { fontFamily: fonts.display, fontSize: 11 };
+export const FONT = { fontFamily: fonts.label, fontSize: 11 };
 
 // Measures the width it gets and hands it to the drawing.
 export function Measured({ height, label, children }: { height: number; label: string; children: (width: number) => ReactNode }) {
@@ -64,13 +64,13 @@ export function AllowanceBars({ allowance }: { allowance: Allowance }) {
             ))}
             <Line x1={0} x2={w} y1={y(perDay)} y2={y(perDay)} stroke={INK.yellow} strokeWidth={1.5} strokeDasharray="4 3" />
             <SvgText x={w} y={y(perDay) - 4} fill={INK.yellow} textAnchor="end" {...FONT}>
-              {`${shortDollars(perDay)} / DAY`}
+              {`$${shortDollars(perDay)} a day`}
             </SvgText>
             <SvgText x={0} y={height - 2} fill={INK.dim} {...FONT}>
-              {`LAST ${recent.length} DAYS`}
+              {`Last ${recent.length} days`}
             </SvgText>
             <SvgText x={w} y={height - 2} fill={INK.dim} textAnchor="end" {...FONT}>
-              TODAY
+              Today
             </SvgText>
           </Svg>
         );
@@ -99,7 +99,7 @@ export function CategoryBars({ rows, elapsed }: { rows: CategoryBurn[]; elapsed:
               return (
                 <G key={r.id}>
                   <SvgText x={0} y={top + 11} fill={ink} {...FONT} fontSize={12}>
-                    {r.name.toUpperCase().slice(0, 14)}
+                    {r.name.slice(0, 14)}
                   </SvgText>
                   <SvgText x={0} y={top + 23} fill={INK.dim} {...FONT} fontSize={10}>
                     {`${shortDollars(r.spent)} / ${shortDollars(r.limit)}`}
@@ -119,7 +119,7 @@ export function CategoryBars({ rows, elapsed }: { rows: CategoryBurn[]; elapsed:
               strokeDasharray="2 2"
             />
             <SvgText x={bx + bw * elapsed} y={height - 1} fill={machine.label} textAnchor="middle" {...FONT} fontSize={10}>
-              TODAY
+              Today
             </SvgText>
           </Svg>
         );
@@ -134,7 +134,7 @@ export function MonthCompareLines({ compare, days }: { compare: MonthCompare; da
   const height = 100;
   const span = Math.max(days, last.length);
   const max = Math.max(now.at(-1)?.cumulative ?? 0, last.at(-1)?.cumulative ?? 0, 1) * 1.1;
-  const lastName = monthLabel(lastMonth).split(' ')[0].slice(0, 3).toUpperCase();
+  const lastName = monthLabel(lastMonth).split(' ')[0].slice(0, 3);
   const hasLast = (last.at(-1)?.cumulative ?? 0) > 0;
   return (
     <Measured
@@ -158,15 +158,15 @@ export function MonthCompareLines({ compare, days }: { compare: MonthCompare; da
             {hasLast && lastAt && <Circle cx={x(lastAt.day)} cy={y(lastAt.cumulative)} r={3} fill={INK.blue} />}
             {end && <Circle cx={x(end.day)} cy={y(end.cumulative)} r={4} fill={INK.line} />}
             {hasLast && (
-              <SvgText x={w} y={12} fill={INK.blue} textAnchor="end" {...FONT}>
+              <SvgText x={w} y={12} fill={INK.dim} textAnchor="end" {...FONT}>
                 {`- - ${lastName}`}
               </SvgText>
             )}
             <SvgText x={0} y={height - 2} fill={INK.dim} {...FONT}>
-              DAY 1
+              Day 1
             </SvgText>
             <SvgText x={w} y={height - 2} fill={INK.dim} textAnchor="end" {...FONT}>
-              {`DAY ${span}`}
+              {`Day ${span}`}
             </SvgText>
           </Svg>
         );
@@ -178,10 +178,10 @@ export function MonthCompareLines({ compare, days }: { compare: MonthCompare; da
 // One bar split into where the month's income goes.
 export function IncomeBar({ split }: { split: IncomeSplit }) {
   const segs = [
-    { name: 'BILLS', value: split.bills, color: INK.blue },
-    { name: 'SPENT', value: split.spent, color: INK.line },
-    { name: 'LEFT', value: split.left, color: INK.faint },
-    { name: 'SAVINGS', value: split.savings, color: INK.yellow },
+    { name: 'Bills', value: split.bills, color: INK.blue },
+    { name: 'Spent', value: split.spent, color: INK.line },
+    { name: 'Left', value: split.left, color: INK.faint },
+    { name: 'Savings', value: split.savings, color: INK.yellow },
   ];
   const total = Math.max(
     1,
@@ -198,7 +198,7 @@ export function IncomeBar({ split }: { split: IncomeSplit }) {
               style={{
                 flex: s.value / total,
                 backgroundColor: s.color,
-                borderWidth: s.name === 'LEFT' ? 1 : 0,
+                borderWidth: s.name === 'Left' ? 1 : 0,
                 borderColor: INK.line,
                 borderStyle: 'dashed',
               }}
@@ -213,7 +213,7 @@ export function IncomeBar({ split }: { split: IncomeSplit }) {
                 width: 10,
                 height: 10,
                 backgroundColor: s.color,
-                borderWidth: s.name === 'LEFT' ? 1 : 0,
+                borderWidth: s.name === 'Left' ? 1 : 0,
                 borderColor: INK.line,
               }}
             />

@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Alert, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { applyKey, Keypad, typedCents } from '@/components/Keypad';
-import { digits as asDigits, Display, DisplayDigits, DisplayLabel, DisplayNote } from '@/components/machine';
+import { Display, DisplayDigits, DisplayLabel, DisplayNote } from '@/components/machine';
 import { ReceiptField } from '@/components/ReceiptField';
 import { spacing } from '@/components/theme';
 import { Button, Card, Chips, Field, SectionTitle, styles as ui } from '@/components/ui';
@@ -157,7 +157,7 @@ export default function AddExpense() {
           <DisplayDigits size={48}>{digits || '0.'}</DisplayDigits>
         </View>
         <DisplayNote>
-          {selected && !existing ? `${asDigits(selected.available)} LEFT · ${asDigits(selected.available - cents)} AFTER` : ' '}
+          {selected && !existing ? `${formatMoney(selected.available)} left → ${formatMoney(selected.available - cents)} after` : ' '}
         </DisplayNote>
       </Display>
 

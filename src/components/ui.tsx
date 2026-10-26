@@ -19,8 +19,9 @@ export function Button({
   variant?: 'primary' | 'secondary' | 'danger' | 'spend';
   disabled?: boolean;
 }) {
-  // Each variant is a calculator key: grey, light, or red. A disabled key is a plain light key, not a faded one.
-  const key = keyColors(disabled ? 'light' : variant === 'primary' ? 'grey' : variant === 'secondary' ? 'light' : 'red');
+  // Primary and spend are solid ink, secondary is white with a hairline, danger is red.
+  // A disabled button is a plain white one, not a faded one.
+  const key = keyColors(disabled || variant === 'secondary' ? 'light' : variant === 'danger' ? 'red' : 'grey');
   return (
     <Pressable
       accessibilityRole="button"
@@ -28,7 +29,7 @@ export function Button({
       disabled={disabled}
       style={({ pressed }) => [
         styles.button,
-        { backgroundColor: key.face, borderBottomColor: key.edge, borderTopColor: key.lip },
+        { backgroundColor: key.face, borderColor: key.edge },
         pressed && styles.buttonPressed,
         disabled && styles.buttonDisabled,
       ]}
@@ -136,34 +137,24 @@ export const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.card,
     borderRadius: radius.paper,
+    borderWidth: 1,
+    borderColor: colors.border,
     padding: spacing.gutter,
     marginBottom: spacing.sm,
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 1,
   },
   button: {
-    borderRadius: radius.key,
-    borderBottomWidth: 4,
-    borderTopWidth: 1,
+    borderRadius: radius.key + 2,
+    borderWidth: 1,
     minHeight: 52,
     justifyContent: 'center',
     paddingVertical: 13,
     alignItems: 'center',
     marginBottom: spacing.sm,
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
   },
-  // A transform moves only this key; changing its margin would nudge everything below it.
-  buttonPressed: { transform: [{ translateY: 3 }], shadowOpacity: 0.08 },
-  buttonDisabled: { shadowOpacity: 0, elevation: 0 },
-  buttonText: { fontFamily: fonts.bold, fontSize: 16, letterSpacing: 1.2, textTransform: 'uppercase' },
-  label: { fontFamily: fonts.bold, ...type.label, color: colors.muted, marginBottom: spacing.sm - 2, textTransform: 'uppercase' },
+  buttonPressed: { opacity: 0.75 },
+  buttonDisabled: {},
+  buttonText: { fontFamily: fonts.bold, fontSize: 16 },
+  label: { fontFamily: fonts.label, ...type.label, color: colors.muted, marginBottom: spacing.sm - 2 },
   input: {
     backgroundColor: colors.card,
     borderRadius: radius.paper,
@@ -171,42 +162,40 @@ export const styles = StyleSheet.create({
     borderColor: colors.border,
     paddingHorizontal: 14,
     paddingVertical: 13,
-    fontFamily: fonts.mono,
+    fontFamily: fonts.body,
     fontSize: 16,
     color: colors.text,
   },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.md },
-  // Chips are small keys: light grey, blue when picked.
-  // At least 44pt tall, Apple's minimum touch target.
+  // White with a hairline; solid ink when picked. At least 44pt tall, Apple's minimum touch target.
   chip: {
     minHeight: 44,
     justifyContent: 'center',
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: radius.key,
-    backgroundColor: keyColors('light').face,
-    borderBottomWidth: 3,
-    borderBottomColor: keyColors('light').edge,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: keyColors('light').edge,
   },
-  chipSelected: { backgroundColor: keyColors('blue').face, borderBottomColor: keyColors('blue').edge },
+  chipSelected: { backgroundColor: colors.text, borderColor: colors.text },
   chipText: { fontFamily: fonts.label, color: colors.text, fontSize: 15 },
-  chipTextSelected: { fontFamily: fonts.bold, color: '#fff' },
-  barTrack: { height: 6, backgroundColor: colors.border, overflow: 'hidden' },
-  barFill: { height: 6 },
+  chipTextSelected: { color: '#fff' },
+  barTrack: { height: 3, borderRadius: 2, backgroundColor: colors.border, overflow: 'hidden' },
+  barFill: { height: 3 },
   sectionTitle: {
-    fontFamily: fonts.bold,
+    fontFamily: fonts.label,
     ...type.label,
-    fontSize: 12,
+    fontSize: 13,
     color: colors.muted,
-    textTransform: 'uppercase',
     marginTop: spacing.xl,
     marginBottom: spacing.sm + 2,
   },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  screenTitle: { fontFamily: fonts.bold, ...type.title, color: colors.text },
+  screenTitle: { fontFamily: fonts.bold, ...type.title, color: colors.text, letterSpacing: -0.4 },
   title: { fontFamily: fonts.bold, ...type.headline, color: colors.text },
   body: { fontFamily: fonts.body, ...type.body, color: colors.text },
   muted: { fontFamily: fonts.body, ...type.body, color: colors.muted },
-  big: { fontFamily: fonts.display, ...type.hero, color: colors.text },
-  money: { fontFamily: fonts.mono, ...type.body, color: colors.text },
+  big: { fontFamily: fonts.display, ...type.hero, color: colors.text, letterSpacing: -1 },
+  money: { fontFamily: fonts.mono, ...type.body, color: colors.text, fontVariant: ['tabular-nums'] },
 });

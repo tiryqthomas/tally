@@ -17,7 +17,7 @@ import {
   DisplayNote,
   Key,
 } from "@/components/machine";
-import { spacing } from "@/components/theme";
+import { fonts, spacing } from "@/components/theme";
 import { Button, styles as ui } from "@/components/ui";
 import { currentMonth, monthLabel } from "@/lib/dates";
 import { useBudgetData, useMonthSummary } from "@/lib/hooks";
@@ -101,8 +101,8 @@ export default function EditLimit() {
           <DisplayDigits size={48}>{typed || "0."}</DisplayDigits>
         </View>
         <DisplayNote>
-          {history.past.length ? `AVG ${digits(history.average)} · ` : ""}
-          SAVINGS {digits(savingsAfter)} / MO
+          {history.past.length ? `Average $${digits(history.average)} · ` : ""}
+          Savings ${digits(savingsAfter)} a month
         </DisplayNote>
         <LimitChart
           history={history}
@@ -118,7 +118,7 @@ export default function EditLimit() {
 
       <View style={local.steps}>
         <Key
-          color="blue"
+          color="light"
           onPress={() => set(Math.max(0, cents - STEP))}
           style={local.step}
           accessibilityLabel="Ten dollars less"
@@ -126,7 +126,7 @@ export default function EditLimit() {
           <Text style={keypadStyles.keyText}>−10</Text>
         </Key>
         <Key
-          color="yellow"
+          color="light"
           onPress={
             history.past.length
               ? () => set(Math.round(history.average / 100) * 100)
@@ -136,10 +136,10 @@ export default function EditLimit() {
           style={local.step}
           accessibilityLabel="Set to your average"
         >
-          <Text style={[keypadStyles.keyText, local.avgText]}>AVG</Text>
+          <Text style={[keypadStyles.keyText, local.avgText]}>Avg</Text>
         </Key>
         <Key
-          color="blue"
+          color="light"
           onPress={() => set(cents + STEP)}
           style={local.step}
           accessibilityLabel="Ten dollars more"
@@ -168,5 +168,5 @@ const used = (u: { spent: number; bills: number }) => u.spent + u.bills;
 const local = StyleSheet.create({
   steps: { flexDirection: "row", gap: 8, marginBottom: 8 },
   step: { flex: 1, alignItems: "center", paddingVertical: 12 },
-  avgText: { color: "#2A2005", fontSize: 22 },
+  avgText: { fontFamily: fonts.label, fontSize: 20 },
 });
