@@ -64,6 +64,8 @@ describe('backups', () => {
     startMonth: '2026-11',
     paidBills: ['rent:2026-11-01'],
     reminders: 'three-days',
+    sounds: false,
+    haptics: true,
   };
 
   test('round trips', () => {
@@ -84,5 +86,7 @@ describe('backups', () => {
     expect(migrated.incomes).toEqual([{ fromMonth: '2026-10', income: { mode: 'salary', monthly: 1000 } }]);
     expect(migrated.paidBills).toEqual([]);
     expect(migrated.reminders).toBe('day-before');
+    expect(migrated.sounds).toBe(true);
+    expect(migrated.haptics).toBe(true);
   });
 });

@@ -1,5 +1,5 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { digits as asDigits, Display, DisplayDigits, DisplayLabel, DisplayNote, Key } from '@/components/machine';
@@ -8,6 +8,7 @@ import { Button, Chips, Field, SectionTitle, styles as ui } from '@/components/u
 import { summarizeMonth } from '@/lib/budget';
 import { currentMonth, monthOf, shortDateLabel, toDateString, today } from '@/lib/dates';
 import { useMonthSummary } from '@/lib/hooks';
+import { keyClick, logged, preloadFeedback } from '@/lib/feedback';
 import { formatMoney } from '@/lib/money';
 import { selectData, useBudget } from '@/lib/store';
 
@@ -31,7 +32,10 @@ export default function AddExpense() {
 
   const cents = digits ? Math.round(Number(digits) * 100) : 0;
 
+  useEffect(preloadFeedback, []);
+
   function press(key: string) {
+    keyClick();
     if (key === '⌫') return setDigits((d) => d.slice(0, -1));
     if (key === 'C') return setDigits('');
     // Drop leading zeros so "00" on an empty amount stays empty.
@@ -49,6 +53,7 @@ export default function AddExpense() {
     }
     const date = day === 'today' ? today() : toDateString(new Date(Date.now() - 86_400_000));
     addExpense({ envelopeId, amount: cents, date, note: note.trim() || undefined });
+    logged();
 
     // Read fresh state so the confirmation reflects the expense just logged.
     const after = summarizeMonth(selectData(useBudget.getState()), monthOf(date));
