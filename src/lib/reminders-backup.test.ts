@@ -61,6 +61,7 @@ describe('backups', () => {
     bills: [rent],
     transfers: [],
     accounts,
+    goals: [],
     startMonth: '2026-11',
     paidBills: ['rent:2026-11-01'],
     reminders: 'three-days',
@@ -86,5 +87,6 @@ describe('backups', () => {
     expect(migrated.paidBills).toEqual([]);
     expect(migrated.reminders).toBe('day-before');
     expect(migrated.homeChart).toBe('pace');
+    expect(migrated.goals).toEqual([]);
   });
 });

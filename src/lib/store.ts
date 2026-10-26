@@ -7,7 +7,7 @@ import { billKey } from './budget';
 import { currentMonth, today } from './dates';
 import type { HomeChart } from './homeCharts';
 import type { ReminderSetting } from './reminderPlan';
-import type { Account, Bill, BudgetData, DateString, Envelope, Expense, Income, Transfer } from './types';
+import type { Account, Bill, BudgetData, DateString, Envelope, Expense, Goal, Income, Transfer } from './types';
 
 const newId = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
 
@@ -32,6 +32,15 @@ interface BudgetState extends SavedState {
   deleteAccount: (id: string) => void;
   // Marks one due date of a bill paid, or unpaid if it already was.
   togglePaid: (billId: string, date: DateString) => void;
+  // Returns the new goal's id.
+  addGoal: (goal: { name: string; price: number; targetDate: DateString; allocation: number }) => string;
+  updateGoal: (id: string, changes: Partial<Pick<Goal, 'name' | 'price' | 'targetDate'>>) => void;
+  // Changes the monthly set-aside from the current month onward.
+  setGoalAllocation: (id: string, amount: number) => void;
+  // Marks the goal bought this month, or not bought if it already was.
+  toggleGoalBought: (id: string) => void;
+  // Hands everything saved back to Savings / Discretionary this month.
+  removeGoal: (id: string) => void;
   setReminders: (setting: ReminderSetting) => void;
   setHomeChart: (chart: HomeChart) => void;
   // Replaces everything with a restored backup.
@@ -50,6 +59,7 @@ const empty = (): SavedState => ({
   bills: [],
   transfers: [],
   accounts: [],
+  goals: [],
   startMonth: currentMonth(),
 });
 
@@ -148,6 +158,42 @@ export const useBudget = create<BudgetState>()(
           };
         }),
 
+      addGoal: ({ allocation, ...goal }) => {
+        const created: Goal = {
+          ...goal,
+          id: newId(),
+          allocations: [{ fromMonth: currentMonth(), amount: allocation }],
+          createdMonth: currentMonth(),
+        };
+        set((s) => ({ goals: [...s.goals, created] }));
+        return created.id;
+      },
+
+      updateGoal: (id, changes) =>
+        set((s) => ({ goals: s.goals.map((g) => (g.id === id ? { ...g, ...changes } : g)) })),
+
+      setGoalAllocation: (id, amount) =>
+        set((s) => {
+          const fromMonth = currentMonth();
+          return {
+            goals: s.goals.map((g) =>
+              g.id === id
+                ? { ...g, allocations: [...g.allocations.filter((a) => a.fromMonth !== fromMonth), { fromMonth, amount }] }
+                : g,
+            ),
+          };
+        }),
+
+      toggleGoalBought: (id) =>
+        set((s) => ({
+          goals: s.goals.map((g) =>
+            g.id === id ? { ...g, boughtMonth: g.boughtMonth ? undefined : currentMonth() } : g,
+          ),
+        })),
+
+      removeGoal: (id) =>
+        set((s) => ({ goals: s.goals.map((g) => (g.id === id ? { ...g, removedMonth: currentMonth() } : g)) })),
+
       setReminders: (reminders) => set({ reminders }),
       setHomeChart: (homeChart) => set({ homeChart }),
 
@@ -184,6 +230,7 @@ export function selectData(s: BudgetState): BudgetData {
     bills: s.bills,
     transfers: s.transfers,
     accounts: s.accounts,
+    goals: s.goals,
     startMonth: s.startMonth,
   };
 }
