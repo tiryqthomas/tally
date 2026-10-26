@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { AppState } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 
-import { summarizeMonth } from './budget';
+import { dailySpending, spendingPace } from './analysis';
+import { billKey, billsInMonth, summarizeMonth } from './budget';
+import { currentMonth, today } from './dates';
 import { syncReminders } from './reminders';
 import { selectData, useBudget } from './store';
 import type { Month } from './types';
@@ -14,6 +16,33 @@ export function useBudgetData() {
 export function useMonthSummary(month: Month) {
   const data = useBudgetData();
   return useMemo(() => summarizeMonth(data, month), [data, month]);
+}
+
+// The numbers behind Home's display and keys: this month, up to today.
+// Shared with the Home chart preview in Settings so both show the same thing.
+export function useHomeNumbers() {
+  const month = currentMonth();
+  const data = useBudgetData();
+  const summary = useMonthSummary(month);
+  const paidBills = useBudget((s) => s.paidBills);
+  const todayDay = Number(today().slice(8, 10));
+  return useMemo(() => {
+    const paid = new Set(paidBills);
+    const due = billsInMonth(data.bills, month);
+    return {
+      month,
+      summary,
+      todayDay,
+      totalAvailable: summary.envelopes.reduce((t, e) => t + e.available, 0),
+      pace: spendingPace(data, month, todayDay),
+      points: dailySpending(data.expenses, month, todayDay),
+      // This month's fixed bills, and how much of that isn't marked paid yet.
+      fixed: {
+        total: due.reduce((t, o) => t + o.bill.amount, 0),
+        unpaid: due.filter((o) => !paid.has(billKey(o.bill.id, o.date))).reduce((t, o) => t + o.bill.amount, 0),
+      },
+    };
+  }, [data, summary, paidBills, month, todayDay]);
 }
 
 // True once saved data has been loaded from the phone.

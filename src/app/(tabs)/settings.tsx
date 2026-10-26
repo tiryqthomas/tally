@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 
+import { HomeDisplay } from '@/components/HomeDisplay';
 import { draftFromIncome, IncomeForm, incomeFromDraft } from '@/components/IncomeForm';
+import { Display } from '@/components/machine';
 import { colors, spacing } from '@/components/theme';
-import { Button, Card, Chips, Field, SectionTitle, styles } from '@/components/ui';
+import { Button, Card, Chips, Field, MultiChips, SectionTitle, styles } from '@/components/ui';
 import { incomeFor } from '@/lib/budget';
 import { currentMonth } from '@/lib/dates';
 import { exportBackup, pickBackup } from '@/lib/backupFile';
-import { HOME_CHART_OPTIONS } from '@/lib/homeCharts';
+import { HOME_CHART_OPTIONS, type HomeChart } from '@/lib/homeCharts';
+import { useHomeNumbers } from '@/lib/hooks';
 import { REMINDER_OPTIONS } from '@/lib/reminderPlan';
 import { reminderPermission, sendTestReminder, type ReminderPermission } from '@/lib/reminders';
 import { selectSaved, useBudget } from '@/lib/store';
@@ -98,6 +101,7 @@ export default function SettingsScreen() {
       <Text style={[styles.muted, { marginBottom: spacing.md }]}>
         {HOME_CHART_OPTIONS.find((o) => o.value === homeChart)?.detail}
       </Text>
+      <HomePreview chart={homeChart} />
 
       <SectionTitle>Accounts bills come out of</SectionTitle>
       {accounts.map((a) => (
@@ -122,18 +126,20 @@ export default function SettingsScreen() {
       />
 
       <SectionTitle>Bill reminders</SectionTitle>
-      <Chips options={REMINDER_OPTIONS} value={reminders} onChange={setReminders} />
+      <MultiChips options={REMINDER_OPTIONS} value={reminders} onChange={setReminders} />
       <Text style={[styles.muted, { marginBottom: spacing.md }]}>
-        {reminders === 'off'
-          ? 'No reminders.'
+        {reminders.length === 0
+          ? 'No reminders. Pick one or more times to be reminded before each bill.'
           : permission === 'denied'
             ? 'Notifications are turned off for Tally. Turn them on in your phone settings to get reminders.'
             : permission === 'unsupported'
               ? 'Reminders work in the phone app.'
-              : 'A notification at 9am for each bill you haven\'t marked paid.'}
+              : reminders.length === 1
+                ? "A notification at 9am for each bill you haven't marked paid. Pick more than one to be reminded again."
+                : `${reminders.length} notifications at 9am for each bill you haven't marked paid.`}
       </Text>
 
-      {reminders !== 'off' && permission !== 'unsupported' && (
+      {reminders.length > 0 && permission !== 'unsupported' && (
         <Button title="Send a test reminder" variant="secondary" onPress={testReminder} />
       )}
 
@@ -147,5 +153,26 @@ export default function SettingsScreen() {
       <Button title="Restore from a backup" variant="secondary" onPress={restoreFromFile} />
       <Button title="Erase all data" variant="danger" onPress={confirmReset} />
     </ScrollView>
+  );
+}
+
+// Home's display with this month's real numbers, so people can see a chart before leaving Settings.
+function HomePreview({ chart }: { chart: HomeChart }) {
+  const { month, todayDay, totalAvailable, pace, points, fixed } = useHomeNumbers();
+  return (
+    <View accessibilityLabel="Preview of the Home chart" style={{ marginBottom: spacing.md }}>
+      <Text style={[styles.muted, { marginBottom: spacing.xs }]}>Preview</Text>
+      <Display>
+        <HomeDisplay
+          chart={chart}
+          totalAvailable={totalAvailable}
+          pace={pace}
+          points={points}
+          month={month}
+          todayDay={todayDay}
+          fixedTotal={fixed.total}
+        />
+      </Display>
+    </View>
   );
 }

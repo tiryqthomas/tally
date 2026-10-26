@@ -7,7 +7,7 @@ import { billKey } from './budget';
 import { currentMonth, today } from './dates';
 import type { HomeChart } from './homeCharts';
 import type { ReminderSetting } from './reminderPlan';
-import type { Account, Bill, BudgetData, DateString, Envelope, Expense, Income, Transfer } from './types';
+import type { Account, Bill, BudgetData, DateString, Envelope, Expense, Income, Month, Transfer } from './types';
 
 const newId = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
 
@@ -16,8 +16,10 @@ interface BudgetState extends SavedState {
   setIncome: (income: Income) => void;
   // The Savings / Discretionary envelope is created automatically.
   finishOnboarding: (income: Income, envelopes: { name: string; limit: number }[]) => void;
-  // Returns the new envelope's id.
-  addEnvelope: (name: string, limit: number) => string;
+  // Returns the new envelope's id. With an earlier `fromMonth` (when an older expense is
+  // moved into a new category), the envelope exists from that month with no limit there,
+  // and `limit` starts this month, so past months' savings don't change.
+  addEnvelope: (name: string, limit: number, fromMonth?: Month) => string;
   renameEnvelope: (id: string, name: string) => void;
   // Changes the limit from the current month onward.
   setEnvelopeLimit: (id: string, limit: number) => void;
@@ -42,7 +44,7 @@ interface BudgetState extends SavedState {
 const empty = (): SavedState => ({
   onboarded: false,
   paidBills: [],
-  reminders: 'day-before',
+  reminders: ['day-before'],
   homeChart: 'pace',
   incomes: [],
   envelopes: [],
@@ -85,8 +87,12 @@ export const useBudget = create<BudgetState>()(
           ],
         }),
 
-      addEnvelope: (name, limit) => {
+      addEnvelope: (name, limit, fromMonth) => {
         const envelope = makeEnvelope(name, limit);
+        if (fromMonth && fromMonth < envelope.createdMonth) {
+          envelope.limits = [{ fromMonth, amount: 0 }, ...envelope.limits];
+          envelope.createdMonth = fromMonth;
+        }
         set((s) => ({ envelopes: [...s.envelopes, envelope] }));
         return envelope.id;
       },

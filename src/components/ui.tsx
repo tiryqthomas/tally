@@ -81,6 +81,39 @@ export function Chips<T extends string>({
   );
 }
 
+// Like Chips, but any number can be picked. Tapping a chip turns it on or off.
+export function MultiChips<T extends string>({
+  options,
+  value,
+  onChange,
+}: {
+  options: { value: T; label: string }[];
+  value: T[];
+  onChange: (value: T[]) => void;
+}) {
+  return (
+    <View style={styles.chips}>
+      {options.map((o) => {
+        const selected = value.includes(o.value);
+        return (
+          <Pressable
+            key={o.value}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: selected }}
+            onPress={() =>
+              // Keep the options' order so saved settings don't depend on tap order.
+              onChange(options.map((x) => x.value).filter((v) => (v === o.value ? !selected : value.includes(v))))
+            }
+            style={[styles.chip, selected && styles.chipSelected]}
+          >
+            <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{o.label}</Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
 export function ProgressBar({ fraction, danger }: { fraction: number; danger?: boolean }) {
   const clamped = Math.max(0, Math.min(1, fraction));
   return (
