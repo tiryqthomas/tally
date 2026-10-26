@@ -22,15 +22,15 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Envelopes',
-          tabBarIcon: ({ color, size }) => <Ionicons name="wallet-outline" size={size} color={color as string} />,
+          title: 'Home',
+          tabBarIcon: ({ color, size }) => <Ionicons name="home-outline" size={size} color={color as string} />,
         }}
       />
       <Tabs.Screen
-        name="bills"
+        name="transactions"
         options={{
-          title: 'Bills',
-          tabBarIcon: ({ color, size }) => <Ionicons name="calendar-outline" size={size} color={color as string} />,
+          title: 'Transactions',
+          tabBarIcon: ({ color, size }) => <Ionicons name="list-outline" size={size} color={color as string} />,
         }}
       />
       <Tabs.Screen

@@ -152,6 +152,7 @@ export default function EnvelopeDetail() {
         {monthExpenses.map((x) => (
           <Pressable
             key={x.id}
+            onPress={() => router.push({ pathname: '/add-expense', params: { id: x.id } })}
             onLongPress={() =>
               Alert.alert('Delete this expense?', `${formatMoney(x.amount)}${x.note ? ` · ${x.note}` : ''}`, [
                 { text: 'Cancel', style: 'cancel' },
@@ -168,7 +169,7 @@ export default function EnvelopeDetail() {
             </Card>
           </Pressable>
         ))}
-        {monthExpenses.length > 0 && <Text style={styles.muted}>Press and hold an expense to delete it.</Text>}
+        {monthExpenses.length > 0 && <Text style={styles.muted}>Tap an expense to edit it, or press and hold to delete it.</Text>}
 
         {envelope.isSavings && (
           <>
