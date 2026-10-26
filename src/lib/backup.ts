@@ -6,10 +6,6 @@ export interface SavedState extends BudgetData {
   onboarded: boolean;
   paidBills: string[];
   reminders: ReminderSetting;
-  // Calculator key clicks and the printer sound when spending is logged.
-  sounds: boolean;
-  // A vibration bump when spending is logged.
-  haptics: boolean;
 }
 
 export const STATE_VERSION = 2;
@@ -25,8 +21,6 @@ export function migrateState(state: Record<string, unknown>, version: number): S
   }
   s.paidBills ??= [];
   s.reminders ??= 'day-before';
-  s.sounds ??= true;
-  s.haptics ??= true;
   return s as unknown as SavedState;
 }
 
