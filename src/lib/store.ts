@@ -31,6 +31,8 @@ interface BudgetState extends SavedState {
   // Marks one due date of a bill paid, or unpaid if it already was.
   togglePaid: (billId: string, date: DateString) => void;
   setReminders: (setting: ReminderSetting) => void;
+  setSounds: (on: boolean) => void;
+  setHaptics: (on: boolean) => void;
   // Replaces everything with a restored backup.
   restore: (state: SavedState) => void;
   resetAll: () => void;
@@ -40,6 +42,8 @@ const empty = (): SavedState => ({
   onboarded: false,
   paidBills: [],
   reminders: 'day-before',
+  sounds: true,
+  haptics: true,
   incomes: [],
   envelopes: [],
   expenses: [],
@@ -142,6 +146,8 @@ export const useBudget = create<BudgetState>()(
         }),
 
       setReminders: (reminders) => set({ reminders }),
+      setSounds: (sounds) => set({ sounds }),
+      setHaptics: (haptics) => set({ haptics }),
 
       restore: (state) => set({ ...empty(), ...state }),
 
@@ -158,7 +164,14 @@ export const useBudget = create<BudgetState>()(
 
 // Everything that gets saved, without the actions. Used for backups.
 export function selectSaved(s: BudgetState): SavedState {
-  return { ...selectData(s), onboarded: s.onboarded, paidBills: s.paidBills, reminders: s.reminders };
+  return {
+    ...selectData(s),
+    onboarded: s.onboarded,
+    paidBills: s.paidBills,
+    reminders: s.reminders,
+    sounds: s.sounds,
+    haptics: s.haptics,
+  };
 }
 
 // Everything the budget math needs, without the actions.
