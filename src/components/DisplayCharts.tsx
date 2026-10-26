@@ -218,7 +218,7 @@ export function IncomeBar({ split }: { split: IncomeSplit }) {
               }}
             />
             <Text
-              style={{ fontFamily: fonts.display, fontSize: 12, color: INK.line }}
+              style={{ fontFamily: fonts.numberBold, fontSize: 12, fontVariant: ['tabular-nums'], color: INK.line }}
             >{`${s.name} ${shortDollars(s.value)}`}</Text>
           </View>
         ))}
@@ -228,5 +228,5 @@ export function IncomeBar({ split }: { split: IncomeSplit }) {
 }
 
 function Empty({ children }: { children: ReactNode }) {
-  return <Text style={{ fontFamily: fonts.display, fontSize: 13, color: INK.dim, marginTop: 10 }}>{children}</Text>;
+  return <Text style={{ fontFamily: fonts.label, fontSize: 13, color: INK.dim, marginTop: 10 }}>{children}</Text>;
 }

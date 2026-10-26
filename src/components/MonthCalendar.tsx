@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
   day: { width: 34, height: 34, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
   daySelected: { backgroundColor: colors.text },
   dayToday: { borderWidth: 1.5, borderColor: colors.text },
-  dayText: { fontFamily: fonts.display, fontSize: 16, color: colors.text },
+  dayText: { fontFamily: fonts.label, fontSize: 16, color: colors.text, fontVariant: ['tabular-nums'] },
   dayTextSelected: { color: '#fff' },
   dot: { width: 6, height: 6, borderRadius: 1, marginTop: 2, backgroundColor: 'transparent' },
   dotOn: { backgroundColor: keyColors('yellow').edge },

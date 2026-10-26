@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HomeDisplay } from '@/components/HomeDisplay';
 import { Fab } from '@/components/Fab';
 import { digits, Display, PaperTape, PrintIn, tape, TapeNote, TickBar } from '@/components/machine';
-import { colors, fonts, machine, radius, spacing, type } from '@/components/theme';
+import { colors, fonts, machine, radius, spacing, tracking, type } from '@/components/theme';
 import { SectionTitle, styles } from '@/components/ui';
 import { billsBetween, nextSevenDays } from '@/lib/analysis';
 import { billKey, billsInMonth, billStatus, type EnvelopeMonth } from '@/lib/budget';
@@ -248,7 +248,7 @@ const local = StyleSheet.create({
   },
   tile: { flex: 1, paddingVertical: spacing.md - 4 },
   tileRight: { borderLeftWidth: 1, borderColor: colors.border, paddingLeft: spacing.md },
-  tileValue: { fontFamily: fonts.monoBold, fontSize: 20, lineHeight: 26, color: colors.text, marginTop: 2, fontVariant: ['tabular-nums'] },
+  tileValue: { fontFamily: fonts.numberBold, fontSize: 20, lineHeight: 26, letterSpacing: tracking(20), color: colors.text, marginTop: 2, fontVariant: ['tabular-nums'] },
   tileNote: { fontFamily: fonts.body, ...type.caption, color: colors.muted },
   label: { fontFamily: fonts.label, ...type.label, fontSize: 13, color: colors.muted },
   week: { flexDirection: 'row', gap: 6, marginTop: spacing.sm + 2 },
@@ -265,8 +265,8 @@ const local = StyleSheet.create({
   },
   dayDue: { backgroundColor: machine.yellow, borderColor: machine.yellow },
   dayToday: { borderWidth: 1.5, borderColor: colors.text },
-  dayNum: { fontFamily: fonts.mono, fontSize: 16, color: colors.text },
-  dayAmount: { fontFamily: fonts.mono, fontSize: 11, color: colors.muted, minHeight: 16, marginTop: 4 },
+  dayNum: { fontFamily: fonts.numberBold, fontSize: 16, color: colors.text, fontVariant: ['tabular-nums'] },
+  dayAmount: { fontFamily: fonts.number, fontSize: 11, letterSpacing: tracking(11), fontVariant: ['tabular-nums'], color: colors.muted, minHeight: 16, marginTop: 4 },
   addButton: { minHeight: 44, justifyContent: 'center' },
   add: { fontFamily: fonts.bold, fontSize: 14, color: colors.accent },
 });

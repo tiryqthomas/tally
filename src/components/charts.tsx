@@ -203,7 +203,7 @@ export function EnvelopeBars({ rows, onPress }: { rows: EnvelopeSpend[]; onPress
 }
 
 const local = StyleSheet.create({
-  axis: { position: 'absolute', bottom: 0, fontSize: 11, fontFamily: fonts.mono, color: colors.muted },
-  budgetLabel: { position: 'absolute', left: 4, fontSize: 11, fontFamily: fonts.mono, color: colors.muted },
+  axis: { position: 'absolute', bottom: 0, fontSize: 11, letterSpacing: 0.1, fontFamily: fonts.number, fontVariant: ['tabular-nums'], color: colors.muted },
+  budgetLabel: { position: 'absolute', left: 4, fontSize: 11, letterSpacing: 0.1, fontFamily: fonts.number, fontVariant: ['tabular-nums'], color: colors.muted },
   legend: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.sm, flexWrap: 'wrap' },
 });

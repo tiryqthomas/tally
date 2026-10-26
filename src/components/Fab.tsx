@@ -33,5 +33,5 @@ const styles = StyleSheet.create({
   },
   text: { fontFamily: fonts.bold, fontSize: 16, color: '#fff' },
   // The calculator's minus-equals sign, kept as a small nod in the accent's light tint.
-  sign: { fontFamily: fonts.monoBold, color: colors.accentSoft },
+  sign: { fontFamily: fonts.keys, color: colors.accentSoft },
 });

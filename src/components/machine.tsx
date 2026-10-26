@@ -11,7 +11,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { formatMoney } from '@/lib/money';
-import { colors, fonts, machine, motion, radius, spacing, type } from './theme';
+import { colors, fonts, machine, motion, radius, spacing, tracking, type } from './theme';
 
 // Calculator digits: no dollar sign, always cents, e.g. -123456 -> "-1,234.56".
 export function digits(cents: number): string {
@@ -148,10 +148,11 @@ export function DisplayDigits({
 }) {
   const shown = useRolling(children, roll);
   const parts = NUMBER.exec(shown);
-  const small = { fontSize: size * 0.55, color: colors.muted };
+  // The dollar sign and cents print smaller and grey, each with spacing that suits its own size.
+  const small = { fontSize: size * 0.55, letterSpacing: tracking(size * 0.55), color: colors.muted };
   return (
     <Text
-      style={[styles.digits, { fontSize: size, lineHeight: size * 1.15, textAlign: align }]}
+      style={[styles.digits, { fontSize: size, lineHeight: size * 1.15, letterSpacing: tracking(size), textAlign: align }]}
       numberOfLines={1}
       adjustsFontSizeToFit
       accessibilityLabel={accessibilityLabel ?? (MONEY.test(children) ? `$${children}` : children)}
@@ -263,7 +264,7 @@ export function TapeNote({ children, action, onPress }: { children: ReactNode; a
 export const tape = StyleSheet.create({
   line: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.sm },
   name: { fontFamily: fonts.label, ...type.body, color: colors.text } as TextStyle,
-  amount: { fontFamily: fonts.monoBold, ...type.body, color: colors.text, fontVariant: ['tabular-nums'] } as TextStyle,
+  amount: { fontFamily: fonts.numberBold, ...type.body, color: colors.text, fontVariant: ['tabular-nums'] } as TextStyle,
   text: { fontFamily: fonts.body, ...type.body, color: colors.text } as TextStyle,
   caption: { fontFamily: fonts.body, ...type.caption, color: colors.muted, marginTop: 4 } as TextStyle,
   row: { paddingVertical: spacing.sm },
@@ -285,14 +286,13 @@ const styles = StyleSheet.create({
   },
   keyPressed: { opacity: 0.7 },
   keyLabel: { fontFamily: fonts.label, ...type.label },
-  keyValue: { fontFamily: fonts.monoBold, fontSize: 20, lineHeight: 26, marginTop: 2 },
-  keyWords: { fontFamily: fonts.bold, fontSize: 18 },
+  keyValue: { fontFamily: fonts.numberBold, fontSize: 20, lineHeight: 26, letterSpacing: tracking(20), marginTop: 2, fontVariant: ['tabular-nums'] },
+  keyWords: { fontFamily: fonts.bold, fontSize: 18, letterSpacing: tracking(18) },
   display: { paddingVertical: spacing.sm },
   displayLabel: { fontFamily: fonts.label, ...type.label, color: machine.label },
   digits: {
     fontFamily: fonts.display,
     color: colors.text,
-    letterSpacing: -1,
     marginTop: spacing.xs,
     fontVariant: ['tabular-nums'],
   },

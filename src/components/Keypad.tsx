@@ -75,7 +75,7 @@ export const keypadStyles = StyleSheet.create({
   ruled: { borderRightWidth: 1 },
   wide: { width: "50%" },
   pressed: { backgroundColor: colors.border },
-  keyText: { fontFamily: fonts.mono, fontSize: 26, color: colors.text },
+  keyText: { fontFamily: fonts.keys, fontSize: 26, color: colors.text },
   wordText: { fontFamily: fonts.label, fontSize: 20 },
 });
 

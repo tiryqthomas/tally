@@ -46,15 +46,25 @@ export const chart = {
   grid: '#ECECE7',
 };
 
+// Geist for everything, including amounts, set with tabular figures so columns of money line up.
+// Geist Mono is kept for the keypad digits and the "−=" sign: the one place the calculator shows.
 export const fonts = {
-  display: 'IBMPlexMono_500Medium',
-  mono: 'IBMPlexMono_400Regular',
-  monoBold: 'IBMPlexMono_500Medium',
-  body: 'IBMPlexSans_400Regular',
-  label: 'IBMPlexSans_500Medium',
-  bold: 'IBMPlexSans_600SemiBold',
-  brand: 'IBMPlexSans_700Bold',
+  display: 'Geist_600SemiBold', // the big readout amount
+  number: 'Geist_400Regular',
+  numberBold: 'Geist_500Medium',
+  keys: 'GeistMono_400Regular',
+  body: 'Geist_400Regular',
+  label: 'Geist_500Medium',
+  bold: 'Geist_600SemiBold',
+  brand: 'Geist_700Bold',
 };
+
+// Letter spacing in points for a font size. Geist has no optical sizes, so big text is tightened and
+// small text opened slightly; body sizes keep the font's own spacing and kerning.
+export function tracking(size: number): number {
+  const em = size >= 28 ? -0.02 : size >= 20 ? -0.01 : size >= 13 ? 0 : 0.01;
+  return Math.round(em * size * 100) / 100;
+}
 
 export const spacing = { xs: 4, sm: 8, md: 16, gutter: 20, lg: 24, xl: 32, xxl: 48 };
 
@@ -63,13 +73,13 @@ export const radius = { paper: 6, key: 10, display: 14 };
 
 // Seven text sizes, about 1.25x apart. Everything is sentence case.
 export const type = {
-  hero: { fontSize: 48, lineHeight: 52 },
-  display: { fontSize: 28, lineHeight: 32 },
-  title: { fontSize: 28, lineHeight: 34 },
-  headline: { fontSize: 17, lineHeight: 22 },
-  body: { fontSize: 15, lineHeight: 20 },
-  caption: { fontSize: 13, lineHeight: 18 },
-  label: { fontSize: 12, lineHeight: 16, letterSpacing: 0.2 },
+  hero: { fontSize: 48, lineHeight: 52, letterSpacing: tracking(48) },
+  display: { fontSize: 28, lineHeight: 32, letterSpacing: tracking(28) },
+  title: { fontSize: 28, lineHeight: 34, letterSpacing: tracking(28) },
+  headline: { fontSize: 17, lineHeight: 22, letterSpacing: tracking(17) },
+  body: { fontSize: 15, lineHeight: 21, letterSpacing: tracking(15) },
+  caption: { fontSize: 13, lineHeight: 18, letterSpacing: tracking(13) },
+  label: { fontSize: 12, lineHeight: 16, letterSpacing: tracking(12) },
 };
 
 // Animation lengths in ms. All motion is skipped when Reduce Motion is on.

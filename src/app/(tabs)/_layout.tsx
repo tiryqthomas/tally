@@ -19,7 +19,7 @@ export default function TabLayout() {
         headerShadowVisible: false,
         // Big left-aligned screen titles, like the month title on Home.
         headerTitleAlign: 'left',
-        headerTitleStyle: { color: colors.text, fontFamily: fonts.bold, fontSize: type.title.fontSize, letterSpacing: -0.4 },
+        headerTitleStyle: { color: colors.text, fontFamily: fonts.bold, fontSize: type.title.fontSize, letterSpacing: type.title.letterSpacing },
         headerTitleContainerStyle: { paddingHorizontal: 4 },
         sceneStyle: { backgroundColor: colors.background },
       }}
