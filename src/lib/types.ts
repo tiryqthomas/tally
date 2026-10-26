@@ -28,6 +28,9 @@ export interface Expense {
   amount: number;
   date: DateString;
   note?: string;
+  // File name of a receipt photo kept in the app's own storage on the phone,
+  // e.g. "lq3x9k2abc.jpg". Never a full path, since the app's folder can move on updates.
+  receipt?: string;
 }
 
 export type BillFrequency = 'weekly' | 'monthly' | 'yearly';
