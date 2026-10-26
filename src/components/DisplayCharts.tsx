@@ -9,7 +9,7 @@ import { fonts, machine } from './theme';
 
 // Charts drawn in glowing blue for the dark display at the top of Home.
 
-const INK = {
+export const INK = {
   line: machine.digit,
   dim: machine.digitDim,
   faint: machine.digitFaint,
@@ -19,10 +19,10 @@ const INK = {
   white: '#F2F3F5',
 };
 
-const FONT = { fontFamily: fonts.display, fontSize: 11 };
+export const FONT = { fontFamily: fonts.display, fontSize: 11 };
 
 // Measures the width it gets and hands it to the drawing.
-function Measured({ height, label, children }: { height: number; label: string; children: (width: number) => ReactNode }) {
+export function Measured({ height, label, children }: { height: number; label: string; children: (width: number) => ReactNode }) {
   const [width, setWidth] = useState(0);
   return (
     <View
@@ -36,7 +36,7 @@ function Measured({ height, label, children }: { height: number; label: string; 
   );
 }
 
-const shortDollars = (cents: number) => digits(cents).replace(/\.\d\d$/, '');
+export const shortDollars = (cents: number) => digits(cents).replace(/\.\d\d$/, '');
 
 // The last 14 days as bars, with the daily allowance as a dashed line. Days over it are red.
 export function AllowanceBars({ allowance }: { allowance: Allowance }) {

@@ -8,7 +8,7 @@ import { Button, Card, Field, SectionTitle, styles } from '@/components/ui';
 import { billsInMonth, summarizeMonths } from '@/lib/budget';
 import { currentMonth, monthLabel, monthOf, shortDateLabel } from '@/lib/dates';
 import { useBudgetData, useMonthSummary } from '@/lib/hooks';
-import { formatMoney, parseMoney } from '@/lib/money';
+import { formatMoney } from '@/lib/money';
 import { useBudget } from '@/lib/store';
 
 export default function EnvelopeDetail() {
@@ -31,11 +31,10 @@ export default function EnvelopeDetail() {
   const row = summary.envelopes.find((e) => e.envelope.id === id);
   const expenses = useBudget((s) => s.expenses);
   const bills = useBudget((s) => s.bills);
-  const { setEnvelopeLimit, renameEnvelope, archiveEnvelope, deleteExpense } = useBudget.getState();
+  const { renameEnvelope, archiveEnvelope, deleteExpense } = useBudget.getState();
 
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(row?.envelope.name ?? '');
-  const [limit, setLimit] = useState(row ? (row.limit / 100).toFixed(2) : '');
 
   if (!row) {
     return (
@@ -55,13 +54,8 @@ export default function EnvelopeDetail() {
   );
 
   function saveEdits() {
-    const cents = parseMoney(limit);
-    if (cents === null || !name.trim()) {
-      Alert.alert('Check the name and limit', 'The limit should be a dollar amount like 400 or 400.00.');
-      return;
-    }
+    if (!name.trim()) return;
     renameEnvelope(envelope.id, name.trim());
-    if (!envelope.isSavings && cents !== row!.limit) setEnvelopeLimit(envelope.id, cents);
     setEditing(false);
   }
 
@@ -202,19 +196,18 @@ export default function EnvelopeDetail() {
         {editing ? (
           <>
             <Field label="Name" value={name} onChangeText={setName} />
-            {!envelope.isSavings && (
-              <Field label="Monthly limit ($), from this month on" value={limit} onChangeText={setLimit} keyboardType="decimal-pad" />
-            )}
             <Button title="Save" onPress={saveEdits} />
             <Button title="Cancel" variant="secondary" onPress={() => setEditing(false)} />
           </>
         ) : (
           <>
-            <Button
-              title={envelope.isSavings ? 'Rename' : 'Edit name or limit'}
-              variant="secondary"
-              onPress={() => setEditing(true)}
-            />
+            {!envelope.isSavings && (
+              <Button
+                title={`Change limit · ${formatMoney(row.limit, { showCents: false })} a month`}
+                onPress={() => router.push({ pathname: '/edit-limit', params: { id: envelope.id } })}
+              />
+            )}
+            <Button title="Rename" variant="secondary" onPress={() => setEditing(true)} />
             {!envelope.isSavings && <Button title="Remove category" variant="danger" onPress={confirmArchive} />}
           </>
         )}
