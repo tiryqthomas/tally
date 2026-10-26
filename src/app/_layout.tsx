@@ -3,10 +3,13 @@ import { IBMPlexMono_500Medium, IBMPlexMono_600SemiBold } from '@expo-google-fon
 import { ShareTechMono_400Regular } from '@expo-google-fonts/share-tech-mono';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
+import { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 
 import { colors, fonts } from '@/components/theme';
+import { receiptNames } from '@/lib/backup';
 import { useHydrated, useReminderSync } from '@/lib/hooks';
+import { pruneReceipts } from '@/lib/receipts';
 import { useBudget } from '@/lib/store';
 
 export default function RootLayout() {
@@ -22,6 +25,10 @@ export default function RootLayout() {
   });
   const onboarded = useBudget((s) => s.onboarded);
   useReminderSync(hydrated && onboarded);
+  // Clear out receipt photos left behind, e.g. one picked before the app was closed mid-edit.
+  useEffect(() => {
+    if (hydrated) pruneReceipts(receiptNames(useBudget.getState()));
+  }, [hydrated]);
 
   // Wait for saved data so first-launch setup doesn't flash for returning users.
   // If the fonts fail to load, carry on with the system font.
@@ -51,6 +58,7 @@ export default function RootLayout() {
         <Stack.Screen name="move-money" options={{ presentation: 'modal', title: 'Move money' }} />
         <Stack.Screen name="new-envelope" options={{ presentation: 'modal', title: 'New category' }} />
         <Stack.Screen name="edit-limit" options={{ presentation: 'modal', title: 'Monthly limit' }} />
+        <Stack.Screen name="receipt" options={{ presentation: 'fullScreenModal', headerShown: false }} />
       </Stack>
     </>
   );

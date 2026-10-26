@@ -1,6 +1,6 @@
 import { describe, expect, test } from '@jest/globals';
 
-import { migrateState, parseBackup, serializeBackup, type SavedState } from './backup';
+import { migrateState, parseBackup, receiptNames, serializeBackup, type SavedState } from './backup';
 import { billKey, billStatus } from './budget';
 import { MAX_REMINDERS, planReminders } from './reminderPlan';
 import type { Bill } from './types';
@@ -85,7 +85,37 @@ describe('backups', () => {
 
   test('round trips', () => {
     const parsed = parseBackup(serializeBackup(state, new Date('2026-11-15T12:00:00Z')));
-    expect(parsed).toEqual({ ok: true, state, exportedAt: '2026-11-15T12:00:00.000Z' });
+    expect(parsed).toEqual({ ok: true, state, exportedAt: '2026-11-15T12:00:00.000Z', receipts: {} });
+  });
+
+  test('carries receipt photos the expenses point to', () => {
+    const withReceipt: SavedState = {
+      ...state,
+      expenses: [
+        { id: 'a', envelopeId: 'e', amount: 1250, date: '2026-11-03', receipt: 'abc123.jpg' },
+        { id: 'b', envelopeId: 'e', amount: 800, date: '2026-11-04' },
+      ],
+    };
+    expect(receiptNames(withReceipt)).toEqual(['abc123.jpg']);
+    const file = serializeBackup(withReceipt, new Date('2026-11-15T12:00:00Z'), { 'abc123.jpg': 'AAAA' });
+    expect(parseBackup(file)).toMatchObject({ ok: true, state: withReceipt, receipts: { 'abc123.jpg': 'AAAA' } });
+  });
+
+  test('ignores receipt files nothing points to or with unsafe names', () => {
+    const file = JSON.stringify({
+      app: 'tally',
+      version: 4,
+      state: { ...state, expenses: [{ id: 'a', envelopeId: 'e', amount: 1, date: '2026-11-03', receipt: '../../x.jpg' }] },
+      receipts: { '../../x.jpg': 'AAAA', 'stray.jpg': 'BBBB' },
+    });
+    const parsed = parseBackup(file);
+    expect(parsed).toMatchObject({ ok: true, receipts: {} });
+    expect(parsed.ok && parsed.state.expenses[0].receipt).toBeUndefined();
+  });
+
+  test('backups from before receipts still restore', () => {
+    const file = JSON.stringify({ app: 'tally', version: 3, state: { ...state, expenses: [{ id: 'a', envelopeId: 'e', amount: 1, date: '2026-11-03' }] } });
+    expect(parseBackup(file)).toMatchObject({ ok: true, receipts: {}, state: { expenses: [{ id: 'a' }] } });
   });
 
   test('rejects files that are not Tally backups', () => {

@@ -1,15 +1,17 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Alert, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { applyKey, Keypad, typedCents } from '@/components/Keypad';
 import { digits as asDigits, Display, DisplayDigits, DisplayLabel, DisplayNote } from '@/components/machine';
+import { ReceiptField } from '@/components/ReceiptField';
 import { spacing } from '@/components/theme';
 import { Button, Card, Chips, Field, SectionTitle, styles as ui } from '@/components/ui';
 import { summarizeMonth } from '@/lib/budget';
 import { currentMonth, monthLabel, monthOf, shortDateLabel, toDateString, today } from '@/lib/dates';
 import { useMonthSummary } from '@/lib/hooks';
 import { formatMoney, parseMoney } from '@/lib/money';
+import { deleteReceipt } from '@/lib/receipts';
 import { selectData, useBudget } from '@/lib/store';
 
 type DayChoice = 'today' | 'yesterday';
@@ -26,6 +28,11 @@ export default function AddExpense() {
   const [digits, setDigits] = useState(existing ? (existing.amount / 100).toFixed(2) : '');
   const [note, setNote] = useState(existing?.note ?? '');
   const [day, setDay] = useState<DayChoice>('today');
+  const [receipt, setReceipt] = useState(existing?.receipt);
+  // A photo picked on this screen that isn't saved yet. It's deleted if it's
+  // replaced, removed, or the screen closes without saving.
+  const unsaved = useRef<string | undefined>(undefined);
+  useEffect(() => () => deleteReceipt(unsaved.current), []);
   // The inline form for adding a category without leaving this screen.
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState('');
@@ -40,14 +47,23 @@ export default function AddExpense() {
     setDigits((d) => applyKey(d, key));
   }
 
+  function changeReceipt(name: string | undefined) {
+    if (unsaved.current !== name) deleteReceipt(unsaved.current);
+    unsaved.current = name;
+    setReceipt(name);
+  }
+
   function save() {
     if (!envelopeId || cents <= 0) return;
+    unsaved.current = undefined;
     if (existing) {
-      updateExpense(existing.id, { envelopeId, amount: cents, note: note.trim() || undefined });
+      // The old photo goes once the change is saved.
+      if (existing.receipt !== receipt) deleteReceipt(existing.receipt);
+      updateExpense(existing.id, { envelopeId, amount: cents, note: note.trim() || undefined, receipt });
       return router.back();
     }
     const date = day === 'today' ? today() : toDateString(new Date(Date.now() - 86_400_000));
-    addExpense({ envelopeId, amount: cents, date, note: note.trim() || undefined });
+    addExpense({ envelopeId, amount: cents, date, note: note.trim() || undefined, receipt });
 
     // Read fresh state so the confirmation reflects the expense just logged.
     const after = summarizeMonth(selectData(useBudget.getState()), monthOf(date));
@@ -77,6 +93,7 @@ export default function AddExpense() {
     if (!existing) return;
     const done = () => {
       deleteExpense(existing.id);
+      deleteReceipt(existing.receipt);
       router.back();
     };
     // Alerts with buttons don't show on web.
@@ -159,6 +176,7 @@ export default function AddExpense() {
         />
       )}
       <Field label="Note (optional)" value={note} onChangeText={setNote} placeholder="Where or what" />
+      <ReceiptField value={receipt} onChange={changeReceipt} />
       <Button
         title={cents <= 0 ? 'Enter an amount' : existing ? 'Save changes' : `−=  Spend ${formatMoney(cents)}`}
         variant={existing ? 'primary' : 'spend'}

@@ -47,7 +47,7 @@ export default function TransactionsScreen() {
       kind: 'spending',
       date: x.date,
       title: x.note || envelopeName(x.envelopeId),
-      detail: x.note ? envelopeName(x.envelopeId) : 'Spending',
+      detail: `${x.note ? envelopeName(x.envelopeId) : 'Spending'}${x.receipt ? ' · Receipt' : ''}`,
       amount: x.amount,
       onPress: () => router.push({ pathname: '/add-expense', params: { id: x.id } }),
     }));

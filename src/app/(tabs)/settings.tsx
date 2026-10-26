@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { HomeDisplay } from '@/components/HomeDisplay';
@@ -8,9 +8,11 @@ import { colors, spacing } from '@/components/theme';
 import { Button, Card, Chips, Field, MultiChips, SectionTitle, styles } from '@/components/ui';
 import { incomeFor } from '@/lib/budget';
 import { currentMonth } from '@/lib/dates';
+import { receiptNames } from '@/lib/backup';
 import { exportBackup, pickBackup } from '@/lib/backupFile';
 import { HOME_CHART_OPTIONS, type HomeChart } from '@/lib/homeCharts';
 import { useHomeNumbers } from '@/lib/hooks';
+import { pruneReceipts, receiptsSize, writeReceipts } from '@/lib/receipts';
 import { REMINDER_OPTIONS } from '@/lib/reminderPlan';
 import { reminderPermission, sendTestReminder, type ReminderPermission } from '@/lib/reminders';
 import { selectSaved, useBudget } from '@/lib/store';
@@ -20,6 +22,12 @@ export default function SettingsScreen() {
   const accounts = useBudget((s) => s.accounts);
   const reminders = useBudget((s) => s.reminders);
   const homeChart = useBudget((s) => s.homeChart);
+  const expenses = useBudget((s) => s.expenses);
+  // Receipt photos make backups bigger, so say how much they add.
+  const receipts = useMemo(() => {
+    const names = receiptNames({ expenses });
+    return { count: names.length, megabytes: receiptsSize(names) / 1_000_000 };
+  }, [expenses]);
   const { setIncome, addAccount, deleteAccount, resetAll, setReminders, setHomeChart, restore } = useBudget.getState();
   const [permission, setPermission] = useState<ReminderPermission>('undetermined');
   useEffect(() => {
@@ -68,15 +76,21 @@ export default function SettingsScreen() {
       Alert.alert('Could not restore', picked.error);
       return;
     }
-    const { state, exportedAt } = picked;
+    const { state, exportedAt, receipts: photos } = picked;
     const when = exportedAt ? ` from ${exportedAt.slice(0, 10)}` : '';
     Alert.alert('Replace everything?', `Everything on this phone will be replaced with the backup${when}.`, [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Restore',
         style: 'destructive',
-        onPress: () => {
+        onPress: async () => {
+          try {
+            await writeReceipts(photos);
+          } catch (e) {
+            Alert.alert('Some receipt photos could not be restored', String(e instanceof Error ? e.message : e));
+          }
           restore(state);
+          pruneReceipts(receiptNames(state));
           setDraft(draftFromIncome(incomeFor(state.incomes, currentMonth())));
         },
       },
@@ -86,7 +100,14 @@ export default function SettingsScreen() {
   function confirmReset() {
     Alert.alert('Erase everything?', 'All categories, spending and bills on this phone will be deleted. This cannot be undone.', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Erase', style: 'destructive', onPress: resetAll },
+      {
+        text: 'Erase',
+        style: 'destructive',
+        onPress: () => {
+          resetAll();
+          pruneReceipts([]);
+        },
+      },
     ]);
   }
 
@@ -148,7 +169,15 @@ export default function SettingsScreen() {
         Tally has no accounts or cloud sync. Everything is stored only on this phone, so deleting the app deletes your
         budget. Save a backup file now and then, for example to iCloud Drive or Google Drive, so you can restore it on
         a new phone.
+        {receipts.count > 0 &&
+          ` Backups include your ${receipts.count} receipt ${receipts.count === 1 ? 'photo' : 'photos'} (about ${receipts.megabytes.toFixed(1)} MB).`}
       </Text>
+      {receipts.megabytes > 25 && (
+        <Text style={[styles.muted, { color: colors.warning, marginBottom: spacing.md }]}>
+          That's a large file. It may take a while to save, and some email apps won't attach it. Saving to Files, iCloud
+          Drive or Google Drive works best.
+        </Text>
+      )}
       <Button title="Back up to a file" variant="secondary" onPress={backup} />
       <Button title="Restore from a backup" variant="secondary" onPress={restoreFromFile} />
       <Button title="Erase all data" variant="danger" onPress={confirmReset} />

@@ -28,6 +28,14 @@
       "expo-sqlite",
       "expo-sharing",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "Tally uses your photos so you can attach a receipt to something you spent. Photos stay on your phone.",
+          "cameraPermission": "Tally uses the camera so you can take a photo of a receipt. Photos stay on your phone.",
+          "microphonePermission": false
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "image": "./assets/splash-icon.png",
