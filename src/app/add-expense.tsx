@@ -1,8 +1,9 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius, spacing } from '@/components/theme';
+import { digits as asDigits, Display, DisplayDigits, DisplayLabel, DisplayNote, Key } from '@/components/machine';
+import { colors, fonts, spacing } from '@/components/theme';
 import { Button, Chips, Field, SectionTitle, styles as ui } from '@/components/ui';
 import { summarizeMonth } from '@/lib/budget';
 import { currentMonth, monthOf, shortDateLabel, toDateString, today } from '@/lib/dates';
@@ -10,7 +11,8 @@ import { useMonthSummary } from '@/lib/hooks';
 import { formatMoney } from '@/lib/money';
 import { selectData, useBudget } from '@/lib/store';
 
-const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', '⌫'];
+// Laid out like an adding machine, 7-8-9 on top.
+const KEYS = ['7', '8', '9', '4', '5', '6', '1', '2', '3', '00', '0', '.'];
 
 type DayChoice = 'today' | 'yesterday';
 
@@ -31,10 +33,12 @@ export default function AddExpense() {
 
   function press(key: string) {
     if (key === '⌫') return setDigits((d) => d.slice(0, -1));
-    const next = digits + key;
+    if (key === 'C') return setDigits('');
+    // Drop leading zeros so "00" on an empty amount stays empty.
+    const next = (digits + key).replace(/^0+(?=\d)/, '');
     // Allow at most one decimal point and two decimal places.
     if (!/^\d{0,7}(\.\d{0,2})?$/.test(next)) return;
-    setDigits(next === '.' ? '0.' : next);
+    setDigits(next === '.' ? '0.' : next === '0' ? '' : next);
   }
 
   function save() {
@@ -85,18 +89,31 @@ export default function AddExpense() {
         value={envelopeId}
         onChange={setEnvelopeId}
       />
-      {selected && !existing && <Text style={ui.muted}>{formatMoney(selected.available)} left before this</Text>}
 
-      <Text style={local.amount} accessibilityLabel="Amount">
-        ${digits || '0'}
-      </Text>
+      <Display style={{ marginVertical: spacing.md }}>
+        <DisplayLabel>{selected ? selected.envelope.name : 'Amount'}</DisplayLabel>
+        <View accessibilityLabel={`Amount ${formatMoney(cents)}`}>
+          <DisplayDigits size={48}>{digits || '0.'}</DisplayDigits>
+        </View>
+        <DisplayNote>
+          {selected && !existing
+            ? `${asDigits(selected.available)} LEFT · ${asDigits(selected.available - cents)} AFTER`
+            : ' '}
+        </DisplayNote>
+      </Display>
 
       <View style={local.pad}>
         {KEYS.map((k) => (
-          <Pressable key={k} onPress={() => press(k)} style={({ pressed }) => [local.key, pressed && { backgroundColor: colors.border }]}>
+          <Key key={k} onPress={() => press(k)} style={local.key} accessibilityLabel={k}>
             <Text style={local.keyText}>{k}</Text>
-          </Pressable>
+          </Key>
         ))}
+        <Key color="light" onPress={() => press('C')} style={local.wideKey} accessibilityLabel="Clear">
+          <Text style={[local.keyText, local.darkText]}>C</Text>
+        </Key>
+        <Key color="light" onPress={() => press('⌫')} style={local.wideKey} accessibilityLabel="Delete last digit">
+          <Text style={[local.keyText, local.darkText]}>⌫</Text>
+        </Key>
       </View>
 
       {existing ? (
@@ -113,7 +130,8 @@ export default function AddExpense() {
       )}
       <Field label="Note (optional)" value={note} onChangeText={setNote} placeholder="Where or what" />
       <Button
-        title={cents <= 0 ? 'Enter an amount' : existing ? 'Save changes' : `Spend ${formatMoney(cents)}`}
+        title={cents <= 0 ? 'Enter an amount' : existing ? 'Save changes' : `−=  Spend ${formatMoney(cents)}`}
+        variant={existing ? 'primary' : 'spend'}
         onPress={save}
         disabled={cents <= 0 || !envelopeId}
       />
@@ -123,13 +141,9 @@ export default function AddExpense() {
 }
 
 const local = StyleSheet.create({
-  amount: { fontSize: 52, fontWeight: '700', textAlign: 'center', color: colors.text, marginVertical: spacing.lg },
-  pad: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: spacing.md },
-  key: {
-    width: '33.333%',
-    paddingVertical: 16,
-    alignItems: 'center',
-    borderRadius: radius.sm,
-  },
-  keyText: { fontSize: 26, color: colors.text, fontWeight: '500' },
+  pad: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: spacing.md },
+  key: { width: '31.5%', flexGrow: 1, alignItems: 'center', paddingVertical: 12 },
+  wideKey: { width: '48%', flexGrow: 1, alignItems: 'center', paddingVertical: 10 },
+  keyText: { fontFamily: fonts.display, fontSize: 26, color: '#fff' },
+  darkText: { fontFamily: fonts.bold, fontSize: 22, color: colors.text },
 });

@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { IncomeForm, incomeFromDraft, type IncomeDraft } from '@/components/IncomeForm';
 import { PresetPicker } from '@/components/PresetPicker';
-import { colors, spacing } from '@/components/theme';
+import { colors, fonts, spacing } from '@/components/theme';
 import { Button, Card, SectionTitle, styles } from '@/components/ui';
 import { monthlyIncome } from '@/lib/budget';
 import { formatMoney, parseMoney } from '@/lib/money';
@@ -94,12 +94,12 @@ export default function Onboarding() {
 
             <View style={{ flexDirection: 'row', gap: spacing.lg, paddingVertical: spacing.sm }}>
               <Pressable onPress={() => setShowPresets((v) => !v)}>
-                <Text style={{ color: colors.accent, fontWeight: '600' }}>
+                <Text style={{ color: colors.accent, fontFamily: fonts.bold }}>
                   {showPresets ? 'Hide suggestions' : '+ Add from suggestions'}
                 </Text>
               </Pressable>
               <Pressable onPress={() => setEnvelopes((list) => [...list, draftEnvelope('')])}>
-                <Text style={{ color: colors.accent, fontWeight: '600' }}>+ Custom</Text>
+                <Text style={{ color: colors.accent, fontFamily: fonts.bold }}>+ Custom</Text>
               </Pressable>
             </View>
             {showPresets && (

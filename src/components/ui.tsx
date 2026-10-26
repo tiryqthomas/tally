@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View, type TextInputProps, type ViewStyle } from 'react-native';
 
-import { colors, radius, spacing } from './theme';
+import { keyColors } from './machine';
+import { colors, fonts, radius, spacing } from './theme';
 
 export function Card({ children, style }: { children: ReactNode; style?: ViewStyle }) {
   return <View style={[styles.card, style]}>{children}</View>;
@@ -15,9 +16,11 @@ export function Button({
 }: {
   title: string;
   onPress: () => void;
-  variant?: 'primary' | 'secondary' | 'danger';
+  variant?: 'primary' | 'secondary' | 'danger' | 'spend';
   disabled?: boolean;
 }) {
+  // Each variant is a calculator key: grey, light, or red.
+  const key = keyColors(variant === 'primary' ? 'grey' : variant === 'secondary' ? 'light' : 'red');
   return (
     <Pressable
       accessibilityRole="button"
@@ -25,14 +28,12 @@ export function Button({
       disabled={disabled}
       style={({ pressed }) => [
         styles.button,
-        variant === 'secondary' && styles.buttonSecondary,
-        variant === 'danger' && styles.buttonDanger,
-        (pressed || disabled) && { opacity: disabled ? 0.4 : 0.8 },
+        { backgroundColor: key.face, borderBottomColor: key.edge },
+        pressed && styles.buttonPressed,
+        disabled && { opacity: 0.4 },
       ]}
     >
-      <Text style={[styles.buttonText, variant !== 'primary' && { color: variant === 'danger' ? colors.danger : colors.accent }]}>
-        {title}
-      </Text>
+      <Text style={[styles.buttonText, { color: key.text }]}>{title}</Text>
     </Pressable>
   );
 }
@@ -81,7 +82,7 @@ export function ProgressBar({ fraction, danger }: { fraction: number; danger?: b
   return (
     <View style={styles.barTrack}>
       <View
-        style={[styles.barFill, { width: `${clamped * 100}%`, backgroundColor: danger ? colors.danger : colors.accent }]}
+        style={[styles.barFill, { width: `${clamped * 100}%`, backgroundColor: danger ? colors.danger : colors.text }]}
       />
     </View>
   );
@@ -96,59 +97,69 @@ export const styles = StyleSheet.create({
   content: { padding: spacing.md, paddingBottom: 120 },
   card: {
     backgroundColor: colors.card,
-    borderRadius: radius.md,
+    borderRadius: 3,
     padding: spacing.md,
     marginBottom: spacing.sm,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 1,
   },
   button: {
-    backgroundColor: colors.accent,
     borderRadius: radius.md,
-    paddingVertical: 14,
+    borderBottomWidth: 4,
+    paddingVertical: 13,
     alignItems: 'center',
     marginBottom: spacing.sm,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
-  buttonSecondary: { backgroundColor: colors.accentSoft },
-  buttonDanger: { backgroundColor: colors.dangerSoft },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  label: { fontSize: 13, color: colors.muted, marginBottom: spacing.xs, fontWeight: '500' },
+  buttonPressed: { borderBottomWidth: 1, marginTop: 3 },
+  buttonText: { fontFamily: fonts.bold, fontSize: 16, letterSpacing: 1.2, textTransform: 'uppercase' },
+  label: { fontFamily: fonts.bold, fontSize: 12, color: colors.muted, marginBottom: spacing.xs, letterSpacing: 1, textTransform: 'uppercase' },
   input: {
     backgroundColor: colors.card,
-    borderRadius: radius.sm,
+    borderRadius: 3,
     borderWidth: 1,
     borderColor: colors.border,
     paddingHorizontal: 12,
     paddingVertical: 12,
+    fontFamily: fonts.mono,
     fontSize: 16,
     color: colors.text,
   },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.md },
+  // Chips are small keys: light grey, blue when picked.
   chip: {
     paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 999,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
+    paddingVertical: 7,
+    borderRadius: radius.sm,
+    backgroundColor: keyColors('light').face,
+    borderBottomWidth: 3,
+    borderBottomColor: keyColors('light').edge,
   },
-  chipSelected: { backgroundColor: colors.accent, borderColor: colors.accent },
-  chipText: { color: colors.text, fontSize: 14 },
-  chipTextSelected: { color: '#fff', fontWeight: '600' },
-  barTrack: { height: 8, borderRadius: 4, backgroundColor: colors.border, overflow: 'hidden' },
-  barFill: { height: 8, borderRadius: 4 },
+  chipSelected: { backgroundColor: keyColors('blue').face, borderBottomColor: keyColors('blue').edge },
+  chipText: { fontFamily: fonts.label, color: colors.text, fontSize: 15 },
+  chipTextSelected: { fontFamily: fonts.bold, color: '#fff' },
+  barTrack: { height: 6, backgroundColor: colors.border, overflow: 'hidden' },
+  barFill: { height: 6 },
   sectionTitle: {
+    fontFamily: fonts.bold,
     fontSize: 13,
-    fontWeight: '600',
     color: colors.muted,
     textTransform: 'uppercase',
-    letterSpacing: 0.6,
+    letterSpacing: 1.4,
     marginTop: spacing.lg,
     marginBottom: spacing.sm,
   },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  title: { fontSize: 17, fontWeight: '600', color: colors.text },
-  body: { fontSize: 15, color: colors.text },
-  muted: { fontSize: 13, color: colors.muted },
-  big: { fontSize: 34, fontWeight: '700', color: colors.text },
+  title: { fontFamily: fonts.bold, fontSize: 18, color: colors.text },
+  body: { fontFamily: fonts.body, fontSize: 16, color: colors.text },
+  muted: { fontFamily: fonts.body, fontSize: 14, color: colors.muted },
+  big: { fontFamily: fonts.display, fontSize: 36, color: colors.text },
+  money: { fontFamily: fonts.mono, fontSize: 15, color: colors.text },
 });

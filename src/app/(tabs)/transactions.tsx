@@ -96,7 +96,7 @@ export default function TransactionsScreen() {
           <Text style={styles.muted}>
             {rows.length} {rows.length === 1 ? 'transaction' : 'transactions'}
           </Text>
-          <Text style={styles.title}>{formatMoney(total)}</Text>
+          <Text style={[styles.money, { fontSize: 18 }]}>{formatMoney(total)}</Text>
         </View>
 
         {groups.length === 0 && (
@@ -133,7 +133,7 @@ export default function TransactionsScreen() {
                     </Text>
                     <Text style={styles.muted}>{r.detail}</Text>
                   </View>
-                  <Text style={styles.body}>{formatMoney(r.amount)}</Text>
+                  <Text style={styles.money}>{formatMoney(r.amount)}</Text>
                 </Pressable>
               ))}
             </Card>
