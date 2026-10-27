@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import type { DailyPoint, Pace } from '@/lib/analysis';
+import { paceName, type DailyPoint, type Pace } from '@/lib/analysis';
 import { daysInMonth, monthLabel } from '@/lib/dates';
 import { useBudgetData, useMonthSummary } from '@/lib/hooks';
 import { categoryBurn, compareWithLastMonth, dailyAllowance, incomeSplit, type HomeChart } from '@/lib/homeCharts';
@@ -84,11 +84,13 @@ export function HomeDisplay({
         return {
           label: totalAvailable < 0 ? 'Over budget' : 'Left to spend',
           value: digits(totalAvailable),
-          note: `${pace.ahead > 0 ? `$${digits(pace.ahead)} ahead of pace` : `$${digits(-pace.ahead)} under pace`} · ${plural(daysLeft, 'day')} left`,
+          note: `${pace.ahead > 0 ? `$${digits(pace.ahead)} ahead of` : `$${digits(-pace.ahead)} under`} ${paceName(pace).short} · ${plural(daysLeft, 'day')} left`,
           body: (
             <SpendLineChart
               points={points}
               budget={pace.budget}
+              pace={pace.curve}
+              paceLabel={paceName(pace).label}
               days={days}
               month={month}
               height={80}

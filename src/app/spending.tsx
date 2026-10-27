@@ -7,7 +7,7 @@ import { MonthSwitcher } from '@/components/MonthSwitcher';
 import { digits, Display, DisplayDigits, DisplayLabel, DisplayNote, PaperTape } from '@/components/machine';
 import { spacing } from '@/components/theme';
 import { Card, SectionTitle, styles } from '@/components/ui';
-import { dailySpending, monthlyTotals, spendingByEnvelope, spendingPace } from '@/lib/analysis';
+import { dailySpending, monthlyTotals, paceName, spendingByEnvelope, spendingPace } from '@/lib/analysis';
 import { currentMonth, daysInMonth, today } from '@/lib/dates';
 import { useBudgetData } from '@/lib/hooks';
 import { formatMoney } from '@/lib/money';
@@ -38,9 +38,9 @@ export default function SpendingScreen() {
           {left >= 0
             ? `${formatMoney(left)} left of ${formatMoney(pace.budget)}`
             : `${formatMoney(-left)} over ${formatMoney(pace.budget)}`}
-          {month === thisMonth && ` · ${pace.ahead > 0 ? `${formatMoney(pace.ahead)} ahead of` : `${formatMoney(-pace.ahead)} under`} pace`}
+          {month === thisMonth && ` · ${pace.ahead > 0 ? `${formatMoney(pace.ahead)} ahead of` : `${formatMoney(-pace.ahead)} under`} ${paceName(pace).short}`}
         </DisplayNote>
-        <SpendLineChart points={points} budget={pace.budget} days={days} month={month} height={180} />
+        <SpendLineChart points={points} budget={pace.budget} pace={pace.curve} paceLabel={paceName(pace).label} days={days} month={month} height={180} />
       </Display>
 
       <SectionTitle>By category</SectionTitle>
