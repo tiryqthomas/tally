@@ -19,7 +19,7 @@ export function ReceiptField({ value, onChange }: { value?: string; onChange: (n
       if (source === 'camera' && Platform.OS !== 'web') {
         const permission = await ImagePicker.requestCameraPermissionsAsync();
         if (!permission.granted) {
-          Alert.alert('Camera is off for Tally', 'Allow camera access in your phone settings to photograph receipts.', [
+          Alert.alert('Camera is off for Abacus', 'Allow camera access in your phone settings to photograph receipts.', [
             { text: 'Not now', style: 'cancel' },
             { text: 'Open Settings', onPress: () => Linking.openSettings() },
           ]);

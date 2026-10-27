@@ -8,7 +8,7 @@ export async function exportBackup(state: SavedState): Promise<void> {
   const blob = new Blob([serializeBackup(state, new Date(), receipts)], { type: 'application/json' });
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
-  link.download = `tally-backup-${today()}.json`;
+  link.download = `abacus-backup-${today()}.json`;
   link.click();
   URL.revokeObjectURL(link.href);
 }

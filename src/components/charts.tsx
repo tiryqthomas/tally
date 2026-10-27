@@ -6,17 +6,21 @@ import type { DailyPoint, EnvelopeSpend, MonthTotal } from '@/lib/analysis';
 import { monthLabel, parseMonth } from '@/lib/dates';
 import { formatMoney } from '@/lib/money';
 import type { Month } from '@/lib/types';
+import { AbacusRod } from './Abacus';
+import { digits, tape } from './machine';
 import { chart, colors, fonts, machine, spacing } from './theme';
 import { styles as ui } from './ui';
 
 const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const shortMonth = (m: Month) => MONTH_SHORT[parseMonth(m).month - 1];
 
-// Cumulative variable spending this month against an even pace toward the budget.
-// Drag across it to read any day.
+// Cumulative variable spending this month against a pace line: the average of recent months,
+// or an even pace toward the budget when there's no history. Drag across it to read any day.
 export function SpendLineChart({
   points,
   budget,
+  pace,
+  paceLabel,
   days,
   month,
   height = 140,
@@ -25,26 +29,30 @@ export function SpendLineChart({
 }: {
   points: DailyPoint[];
   budget: number;
+  // What the pace says should be spent by the end of each day, day 1 first.
+  pace: number[];
+  paceLabel: string;
   days: number;
   month: Month;
   height?: number;
   interactive?: boolean;
-  // Drawn in glowing blue for the dark calculator display.
+  // Drawn in the accent ink for the readout at the top of Home.
   onDisplay?: boolean;
 }) {
   const ink = onDisplay
-    ? { line: machine.digit, pace: machine.digitDim, grid: machine.digitFaint, text: machine.digitDim, dotEdge: machine.display }
+    ? { line: machine.digit, pace: machine.digitDim, grid: machine.digitFaint, text: machine.digitDim, dotEdge: colors.background }
     : { line: chart.variable, pace: chart.pace, grid: chart.grid, text: colors.muted, dotEdge: '#fff' };
   const [width, setWidth] = useState(0);
   const [hover, setHover] = useState<number | null>(null);
   const pad = { top: 10, bottom: 18, left: 2, right: 2 };
-  const maxY = Math.max(budget, points.at(-1)?.cumulative ?? 0, 1) * 1.08;
+  const maxY = Math.max(budget, points.at(-1)?.cumulative ?? 0, pace.at(-1) ?? 0, 1) * 1.08;
   const plotW = Math.max(0, width - pad.left - pad.right);
   const plotH = height - pad.top - pad.bottom;
   const x = (day: number) => pad.left + ((day - 1) / Math.max(1, days - 1)) * plotW;
   const y = (v: number) => pad.top + plotH - (v / maxY) * plotH;
 
   const spentPath = points.map((p, i) => `${i ? 'L' : 'M'}${x(p.day)},${y(p.cumulative)}`).join(' ');
+  const pacePath = pace.map((v, i) => `${i ? 'L' : 'M'}${x(i + 1)},${y(v)}`).join(' ');
   const last = points.at(-1);
   const shown = hover !== null ? points[hover] : null;
 
@@ -60,7 +68,7 @@ export function SpendLineChart({
       {!onDisplay && (
         <Text style={[ui.muted, { minHeight: 18 }]}>
           {shown
-            ? `${shortMonth(month)} ${shown.day}: ${formatMoney(shown.cumulative, { showCents: false })} spent so far, pace ${formatMoney(Math.round((budget * shown.day) / days), { showCents: false })}`
+            ? `${shortMonth(month)} ${shown.day}: ${formatMoney(shown.cumulative, { showCents: false })} spent so far, ${paceLabel.toLowerCase()} ${formatMoney(pace[shown.day - 1] ?? 0, { showCents: false })}`
             : ' '}
         </Text>
       )}
@@ -79,7 +87,7 @@ export function SpendLineChart({
           <Svg width={width} height={height}>
             <Line x1={pad.left} x2={width - pad.right} y1={y(0)} y2={y(0)} stroke={ink.grid} strokeWidth={1} />
             <Line x1={pad.left} x2={width - pad.right} y1={y(budget)} y2={y(budget)} stroke={ink.grid} strokeWidth={1} />
-            <Line x1={x(1)} y1={y(0)} x2={x(days)} y2={y(budget)} stroke={ink.pace} strokeWidth={1.5} strokeDasharray="4 4" />
+            <Path d={pacePath} stroke={ink.pace} strokeWidth={1.5} strokeDasharray="4 4" fill="none" strokeLinejoin="round" />
             {points.length > 0 && <Path d={spentPath} stroke={ink.line} strokeWidth={onDisplay ? 2.5 : 2} fill="none" strokeLinejoin="round" />}
             {last && <Circle cx={x(last.day)} cy={y(last.cumulative)} r={4} fill={ink.line} stroke={ink.dotEdge} strokeWidth={2} />}
             {shown && (
@@ -99,7 +107,7 @@ export function SpendLineChart({
       {!onDisplay && (
         <View style={local.legend}>
           <LegendItem color={chart.variable} label="Spent" />
-          <LegendItem color={chart.pace} label="Even pace" dashed />
+          <LegendItem color={chart.pace} label={paceLabel} dashed />
         </View>
       )}
     </View>
@@ -175,26 +183,32 @@ export function MonthBars({ totals, selected, onSelect }: { totals: MonthTotal[]
   );
 }
 
-// Variable spending per envelope against its limit.
+// Variable spending per envelope against its limit, drawn like the category rows on Home:
+// name and amount spent, an abacus rod for how much of the limit is used, red when over.
 export function EnvelopeBars({ rows, onPress }: { rows: EnvelopeSpend[]; onPress?: (envelopeId: string) => void }) {
   return (
-    <View style={{ gap: spacing.md }}>
-      {rows.map((r) => {
+    <View>
+      {rows.map((r, i) => {
         const over = r.limit > 0 && r.spent > r.limit;
-        const fraction = r.limit > 0 ? Math.min(1, r.spent / r.limit) : 1;
+        const ink = over ? { color: colors.danger } : undefined;
         return (
-          <Pressable key={r.envelopeId} onPress={onPress ? () => onPress(r.envelopeId) : undefined}>
-            <View style={ui.row}>
-              <Text style={ui.body}>{r.name}</Text>
-              <Text style={ui.body}>
-                {formatMoney(r.spent, { showCents: false })}
-                <Text style={ui.muted}>{r.limit > 0 ? ` of ${formatMoney(r.limit, { showCents: false })}` : ''}</Text>
+          <Pressable
+            key={r.envelopeId}
+            onPress={onPress ? () => onPress(r.envelopeId) : undefined}
+            accessibilityRole="button"
+            accessibilityLabel={`${r.name}, ${formatMoney(r.spent)} spent${r.limit > 0 ? ` of ${formatMoney(r.limit)}` : ''}${over ? ', over' : ''}`}
+            style={[tape.row, i > 0 && tape.divider]}
+          >
+            <View style={tape.line}>
+              <Text style={[tape.name, ink, { flex: 1 }]} numberOfLines={1}>
+                {r.name}
               </Text>
+              <Text style={[tape.amount, ink]}>{digits(r.spent)}</Text>
             </View>
-            <View style={[ui.barTrack, { marginTop: 6 }]}>
-              <View style={[ui.barFill, { width: `${fraction * 100}%`, backgroundColor: over ? colors.danger : chart.variable }]} />
-            </View>
-            {over && <Text style={[ui.muted, { color: colors.danger, marginTop: 2 }]}>Over by {formatMoney(r.spent - r.limit)}</Text>}
+            <AbacusRod fraction={r.limit > 0 ? r.spent / r.limit : 1} red={over} />
+            <Text style={[tape.caption, ink]}>
+              {r.limit > 0 ? `${over ? `Over by ${digits(r.spent - r.limit)} · ` : ''}of ${digits(r.limit)}` : 'No limit set'}
+            </Text>
           </Pressable>
         );
       })}
@@ -203,7 +217,7 @@ export function EnvelopeBars({ rows, onPress }: { rows: EnvelopeSpend[]; onPress
 }
 
 const local = StyleSheet.create({
-  axis: { position: 'absolute', bottom: 0, fontSize: 11, fontFamily: fonts.mono, color: colors.muted },
-  budgetLabel: { position: 'absolute', left: 4, fontSize: 11, fontFamily: fonts.mono, color: colors.muted },
+  axis: { position: 'absolute', bottom: 0, fontSize: 11, letterSpacing: 0.1, fontFamily: fonts.number, fontVariant: ['tabular-nums'], color: colors.muted },
+  budgetLabel: { position: 'absolute', left: 4, fontSize: 11, letterSpacing: 0.1, fontFamily: fonts.number, fontVariant: ['tabular-nums'], color: colors.muted },
   legend: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.sm, flexWrap: 'wrap' },
 });

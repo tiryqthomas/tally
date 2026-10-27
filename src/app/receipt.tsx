@@ -21,7 +21,7 @@ export default function ReceiptScreen() {
         <Pressable
           accessibilityRole="button"
           onPress={() => router.back()}
-          style={[styles.chip, { backgroundColor: key.face, borderBottomColor: key.edge, minHeight: 44, justifyContent: 'center' }]}
+          style={[styles.chip, { backgroundColor: key.face, borderColor: key.edge, minHeight: 44, justifyContent: 'center' }]}
         >
           <Text style={styles.chipText}>Done</Text>
         </Pressable>
@@ -43,7 +43,7 @@ export default function ReceiptScreen() {
           />
         </ScrollView>
       ) : (
-        <Text style={[styles.body, { color: machine.digit, padding: spacing.md }]}>This receipt photo isn't on this phone.</Text>
+        <Text style={[styles.body, { color: '#FFFFFF', padding: spacing.md }]}>This receipt photo isn't on this phone.</Text>
       )}
     </SafeAreaView>
   );

@@ -1,61 +1,62 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { Pressable, Text, View } from 'react-native';
 
 import { billStatus, type BillStatus } from '@/lib/budget';
 import { shortDateLabel, today } from '@/lib/dates';
-import { formatMoney } from '@/lib/money';
 import { useBudget } from '@/lib/store';
 import type { Bill, DateString } from '@/lib/types';
-import { colors, fonts, radius, spacing } from './theme';
-import { Card, styles } from './ui';
+import { digits, tape } from './machine';
+import { colors, fonts } from './theme';
 
 const STATUS: Record<BillStatus, { label: string; color: string }> = {
   paid: { label: 'Paid', color: colors.accent },
-  overdue: { label: 'Overdue, not marked paid', color: colors.danger },
+  overdue: { label: 'Not marked paid', color: colors.danger },
   'due-today': { label: 'Due today', color: colors.warning },
   upcoming: { label: 'Upcoming', color: colors.muted },
 };
 
-// One due date of a bill, with a button to mark it paid.
-export function BillCard({ bill, date, detail, onPress }: { bill: Bill; date: DateString; detail?: string; onPress: () => void }) {
+// One due date of a bill, as a row on a sheet like every other list: name and amount, then the
+// date and status, with a text action to mark it paid. `first` drops the rule above the top row.
+export function BillRow({
+  bill,
+  date,
+  detail,
+  first,
+  onPress,
+}: {
+  bill: Bill;
+  date: DateString;
+  detail?: string;
+  first?: boolean;
+  onPress: () => void;
+}) {
   const paidBills = useBudget((s) => s.paidBills);
   const togglePaid = useBudget((s) => s.togglePaid);
   const status = billStatus(bill.id, date, new Set(paidBills), today());
   const paid = status === 'paid';
+  const dim = paid ? { color: colors.muted } : undefined;
 
   return (
-    <Pressable onPress={onPress} accessibilityRole="button">
-      <Card style={status === 'overdue' ? { borderColor: colors.danger, borderWidth: 1 } : undefined}>
-        <View style={styles.row}>
-          <Text style={[styles.title, paid && { color: colors.muted }]}>{bill.name}</Text>
-          <Text style={[styles.money, { fontSize: 17 }, paid && { color: colors.muted }]}>{formatMoney(bill.amount)}</Text>
-        </View>
-        <Text style={styles.muted}>
-          {shortDateLabel(date)}
-          {detail ? ` · ${detail}` : ''}
+    <Pressable onPress={onPress} accessibilityRole="button" style={[tape.row, !first && tape.divider]}>
+      <View style={tape.line}>
+        <Text style={[tape.name, dim, { flex: 1 }]} numberOfLines={1}>
+          {bill.name}
         </Text>
-        <View style={[styles.row, { marginTop: spacing.sm }]}>
-          <Text style={[styles.muted, { color: STATUS[status].color, fontFamily: fonts.bold }]}>{STATUS[status].label}</Text>
-          <Pressable
-            onPress={() => togglePaid(bill.id, date)}
-            accessibilityRole="button"
-            accessibilityLabel={paid ? `Mark ${bill.name} unpaid` : `Mark ${bill.name} paid`}
-            hitSlop={8}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 4,
-              paddingHorizontal: 12,
-              paddingVertical: 10,
-              borderRadius: radius.key,
-              backgroundColor: paid ? colors.background : colors.accentSoft,
-            }}
-          >
-            <Ionicons name={paid ? 'arrow-undo-outline' : 'checkmark'} size={16} color={colors.accent} />
-            <Text style={{ color: colors.accent, fontFamily: fonts.bold }}>{paid ? 'Undo' : 'Mark paid'}</Text>
-          </Pressable>
-        </View>
-      </Card>
+        <Text style={[tape.amount, dim]}>{digits(bill.amount)}</Text>
+      </View>
+      <View style={tape.line}>
+        <Text style={[tape.caption, { flex: 1 }]} numberOfLines={1}>
+          {shortDateLabel(date)}
+          {detail ? ` · ${detail}` : ''} · <Text style={{ color: STATUS[status].color }}>{STATUS[status].label}</Text>
+        </Text>
+        <Pressable
+          onPress={() => togglePaid(bill.id, date)}
+          accessibilityRole="button"
+          accessibilityLabel={paid ? `Mark ${bill.name} unpaid` : `Mark ${bill.name} paid`}
+          hitSlop={12}
+        >
+          <Text style={[tape.caption, { color: colors.accent, fontFamily: fonts.bold }]}>{paid ? 'Undo' : 'Mark paid'}</Text>
+        </Pressable>
+      </View>
     </Pressable>
   );
 }

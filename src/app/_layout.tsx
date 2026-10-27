@@ -1,12 +1,12 @@
-import { BarlowSemiCondensed_500Medium, BarlowSemiCondensed_600SemiBold, BarlowSemiCondensed_700Bold, BarlowSemiCondensed_800ExtraBold_Italic } from '@expo-google-fonts/barlow-semi-condensed';
-import { IBMPlexMono_500Medium, IBMPlexMono_600SemiBold } from '@expo-google-fonts/ibm-plex-mono';
-import { ShareTechMono_400Regular } from '@expo-google-fonts/share-tech-mono';
+import { Geist_400Regular, Geist_500Medium, Geist_600SemiBold, Geist_700Bold } from '@expo-google-fonts/geist';
+import { GeistMono_400Regular } from '@expo-google-fonts/geist-mono';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { useEffect } from 'react';
+import { Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 
-import { colors, fonts } from '@/components/theme';
+import { colors, fonts, type } from '@/components/theme';
 import { receiptNames } from '@/lib/backup';
 import { useHydrated, useReminderSync } from '@/lib/hooks';
 import { pruneReceipts } from '@/lib/receipts';
@@ -15,13 +15,11 @@ import { useBudget } from '@/lib/store';
 export default function RootLayout() {
   const hydrated = useHydrated();
   const [fontsLoaded, fontError] = useFonts({
-    ShareTechMono_400Regular,
-    IBMPlexMono_500Medium,
-    IBMPlexMono_600SemiBold,
-    BarlowSemiCondensed_500Medium,
-    BarlowSemiCondensed_600SemiBold,
-    BarlowSemiCondensed_700Bold,
-    BarlowSemiCondensed_800ExtraBold_Italic,
+    Geist_400Regular,
+    Geist_500Medium,
+    Geist_600SemiBold,
+    Geist_700Bold,
+    GeistMono_400Regular,
   });
   const onboarded = useBudget((s) => s.onboarded);
   useReminderSync(hydrated && onboarded);
@@ -40,7 +38,17 @@ export default function RootLayout() {
       <Stack
         screenOptions={{
           headerTintColor: colors.accent,
-          headerTitleStyle: { color: colors.text, fontFamily: fonts.bold },
+          // Same big left-aligned title as the tab screens. iOS shows it as a large title that
+          // shrinks into the bar on scroll; elsewhere it's the same size as the tab titles.
+          headerTitleAlign: 'left',
+          headerTitleStyle: {
+            color: colors.text,
+            fontFamily: fonts.bold,
+            fontSize: Platform.OS === 'ios' ? type.headline.fontSize : type.title.fontSize,
+          },
+          headerLargeTitle: true,
+          headerLargeTitleShadowVisible: false,
+          headerLargeTitleStyle: { color: colors.text, fontFamily: fonts.bold },
           contentStyle: { backgroundColor: colors.background },
           headerTransparent: false,
           headerStyle: { backgroundColor: colors.background },

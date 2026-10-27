@@ -5,20 +5,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { HomeDisplay } from '@/components/HomeDisplay';
 import { Fab } from '@/components/Fab';
-import {
-  digits,
-  Display,
-  Key,
-  KeyLabel,
-  keyColors,
-  PaperTape,
-  PrintIn,
-  tape,
-  TapeNote,
-  TickBar,
-} from '@/components/machine';
-import { colors, fonts, machine, radius, spacing, type } from '@/components/theme';
-import { SectionTitle, styles } from '@/components/ui';
+import { AbacusRod } from '@/components/Abacus';
+import { digits, Display, PaperTape, PrintIn, tape, TapeNote } from '@/components/machine';
+import { colors, fonts, machine, radius, spacing, tracking, type } from '@/components/theme';
+import { SectionTitle, styles, TextLink } from '@/components/ui';
 import { billsBetween, nextSevenDays } from '@/lib/analysis';
 import { billKey, billsInMonth, billStatus, type EnvelopeMonth } from '@/lib/budget';
 import { monthLabel, shortDateLabel, today, weekdayOf } from '@/lib/dates';
@@ -59,22 +49,27 @@ export default function HomeScreen() {
           </Display>
         </Pressable>
 
-        <View style={local.keyRow}>
-          <Key
-            color="yellow"
-            style={{ flex: 1 }}
+        <View style={local.tiles}>
+          <Pressable
+            style={local.tile}
             onPress={() => router.push('/bills')}
+            accessibilityRole="button"
             accessibilityLabel={`Fixed bills: ${formatMoney(fixed.unpaid)} left to pay of ${formatMoney(fixed.total)}`}
           >
-            <KeyLabel
-              color="yellow"
-              label={`Bills left · of ${digits(fixed.total).replace(/\.\d\d$/, '')}`}
-              value={digits(fixed.unpaid)}
-            />
-          </Key>
-          <Key style={{ flex: 1 }} onPress={() => router.push('/spending')} accessibilityLabel="Variable spending">
-            <KeyLabel label={`Spent · of ${digits(pace.budget).replace(/\.\d\d$/, '')}`} value={digits(pace.spent)} />
-          </Key>
+            <Text style={local.label}>Bills left</Text>
+            <Text style={local.tileValue}>{digits(fixed.unpaid)}</Text>
+            <Text style={local.tileNote}>of {digits(fixed.total)}</Text>
+          </Pressable>
+          <Pressable
+            style={[local.tile, local.tileRight]}
+            onPress={() => router.push('/spending')}
+            accessibilityRole="button"
+            accessibilityLabel="Variable spending"
+          >
+            <Text style={local.label}>Spent</Text>
+            <Text style={local.tileValue}>{digits(pace.spent)}</Text>
+            <Text style={local.tileNote}>of {digits(pace.budget)}</Text>
+          </Pressable>
         </View>
 
         <BillsWidget onPress={() => router.push('/bills')} />
@@ -104,30 +99,23 @@ export default function HomeScreen() {
 
         <SectionTitle>Categories</SectionTitle>
         <PaperTape>
-          {others.map((e) => (
+          {others.map((e, i) => (
             <PrintIn key={e.envelope.id}>
-              <TapeRow row={e} onPress={() => router.push(`/envelope/${e.envelope.id}`)} />
+              <TapeRow row={e} first={i === 0} onPress={() => router.push(`/envelope/${e.envelope.id}`)} />
             </PrintIn>
           ))}
           <View style={[tape.line, tape.total]}>
-            <Text style={tape.name}>LEFT</Text>
-            <Text style={tape.name}>{digits(others.reduce((t, e) => t + e.available, 0))} *</Text>
+            <Text style={tape.name}>Left</Text>
+            <Text style={tape.amount}>{digits(others.reduce((t, e) => t + e.available, 0))}</Text>
           </View>
         </PaperTape>
-        <Pressable
-          onPress={() => router.push('/new-envelope')}
-          style={local.addButton}
-          hitSlop={8}
-          accessibilityRole="button"
-        >
-          <Text style={local.add}>+ ADD CATEGORY</Text>
-        </Pressable>
+        <TextLink title="+ Add category" onPress={() => router.push('/new-envelope')} />
 
         {savings && (
           <>
             <SectionTitle>Savings</SectionTitle>
             <PaperTape>
-              <TapeRow row={savings} onPress={() => router.push(`/envelope/${savings.envelope.id}`)} />
+              <TapeRow row={savings} first onPress={() => router.push(`/envelope/${savings.envelope.id}`)} />
             </PaperTape>
             <Text style={styles.muted}>
               Gets whatever income your other categories don't use, covers any category that runs out, and carries its balance
@@ -141,8 +129,8 @@ export default function HomeScreen() {
   );
 }
 
-// One envelope printed on the tape: name and what's left, a bar of ink blocks, then the detail.
-function TapeRow({ row, onPress }: { row: EnvelopeMonth; onPress: () => void }) {
+// One category on the sheet: name and what's left, an abacus rod of what's been used, then the detail.
+function TapeRow({ row, first, onPress }: { row: EnvelopeMonth; first?: boolean; onPress: () => void }) {
   const budget = row.limit + row.rollover + row.transfersIn - row.transfersOut;
   // Includes money the savings envelope handed to other envelopes.
   const used = budget - row.available;
@@ -158,17 +146,15 @@ function TapeRow({ row, onPress }: { row: EnvelopeMonth; onPress: () => void }) 
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={`${row.envelope.name}, ${formatMoney(row.available)} left${red ? ', over budget' : ''}. ${detail}`}
-      style={tape.row}
+      style={[tape.row, !first && tape.divider]}
     >
       <View style={tape.line}>
         <Text style={[tape.name, ink, { flex: 1 }]} numberOfLines={1}>
-          {row.envelope.name.toUpperCase()}
+          {row.envelope.name}
         </Text>
-        <Text style={[tape.name, ink]}>
-          {digits(row.available)} {red ? '◆' : '+'}
-        </Text>
+        <Text style={[tape.amount, ink]}>{digits(row.available)}</Text>
       </View>
-      <TickBar fraction={budget > 0 ? used / budget : negative ? 1 : 0} red={red} />
+      <AbacusRod fraction={budget > 0 ? used / budget : negative ? 1 : 0} red={red} />
       <Text style={[tape.caption, red && { color: colors.danger }]}>
         {red ? (negative ? 'Over · ' : 'Covered by savings · ') : ''}
         {detail}
@@ -179,7 +165,7 @@ function TapeRow({ row, onPress }: { row: EnvelopeMonth; onPress: () => void }) 
 
 const WEEKDAY = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
-// The next seven days as a row of keys; days with a bill due are yellow. Tapping opens the bills calendar.
+// The next seven days as a row of ruled boxes; days with a bill due are amber. Tapping opens the bills calendar.
 function BillsWidget({ onPress }: { onPress: () => void }) {
   const bills = useBudget((s) => s.bills);
   const paidBills = useBudget((s) => s.paidBills);
@@ -204,18 +190,17 @@ function BillsWidget({ onPress }: { onPress: () => void }) {
           const due = upcoming.filter((o) => o.date === date);
           const amount = due.reduce((t, o) => t + o.bill.amount, 0);
           const isToday = date === todayDate;
-          const key = keyColors(due.length ? 'yellow' : 'grey');
           return (
             <View key={date} style={{ flex: 1, alignItems: 'center' }}>
               <Text style={local.weekday}>{WEEKDAY[weekdayOf(date)]}</Text>
               <View
                 style={[
                   local.dayKey,
-                  { backgroundColor: key.face, borderBottomColor: key.edge },
-                  isToday && { borderWidth: 2, borderColor: machine.red, borderBottomWidth: 4, borderBottomColor: machine.red },
+                  due.length > 0 && local.dayDue,
+                  isToday && local.dayToday,
                 ]}
               >
-                <Text style={[local.dayNum, { color: key.text }]}>{Number(date.slice(8, 10))}</Text>
+                <Text style={local.dayNum}>{Number(date.slice(8, 10))}</Text>
               </View>
               <Text style={local.dayAmount}>{amount ? formatMoney(amount, { showCents: false }) : ''}</Text>
             </View>
@@ -229,10 +214,11 @@ function BillsWidget({ onPress }: { onPress: () => void }) {
             return (
               <View key={`${o.bill.id}${o.date}`} style={[tape.line, { paddingVertical: spacing.xs }]}>
                 <Text style={[tape.text, isPaid && { color: colors.muted }, { flex: 1 }]} numberOfLines={1}>
-                  {o.bill.name.toUpperCase()} · {shortDateLabel(o.date).toUpperCase()}
+                  {o.bill.name} · {shortDateLabel(o.date)}
                 </Text>
-                <Text style={[tape.text, isPaid && { color: colors.muted }]}>
-                  {digits(o.bill.amount)} {isPaid ? '✓' : '−'}
+                <Text style={[tape.amount, isPaid && { color: colors.muted }]}>
+                  {isPaid ? '✓ ' : ''}
+                  {digits(o.bill.amount)}
                 </Text>
               </View>
             );
@@ -245,21 +231,34 @@ function BillsWidget({ onPress }: { onPress: () => void }) {
 }
 
 const local = StyleSheet.create({
-  month: { marginBottom: spacing.md, paddingHorizontal: 2 },
-  keyRow: { flexDirection: 'row', gap: spacing.sm + 4, marginTop: spacing.md },
-  label: { fontFamily: fonts.bold, ...type.label, fontSize: 12, color: colors.muted, textTransform: 'uppercase' },
+  month: { marginBottom: spacing.sm, paddingHorizontal: 2 },
+  // Two figures side by side between hairlines, like columns on a ledger page.
+  tiles: {
+    flexDirection: 'row',
+    marginTop: spacing.md,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: colors.border,
+  },
+  tile: { flex: 1, paddingVertical: spacing.md - 4 },
+  tileRight: { borderLeftWidth: 1, borderColor: colors.border, paddingLeft: spacing.md },
+  tileValue: { fontFamily: fonts.numberBold, fontSize: 20, lineHeight: 26, letterSpacing: tracking(20), color: colors.text, marginTop: 2, fontVariant: ['tabular-nums'] },
+  tileNote: { fontFamily: fonts.body, ...type.caption, color: colors.muted },
+  label: { fontFamily: fonts.label, ...type.label, fontSize: 13, color: colors.muted },
   week: { flexDirection: 'row', gap: 6, marginTop: spacing.sm + 2 },
-  weekday: { fontFamily: fonts.bold, ...type.label, color: colors.muted, marginBottom: 4 },
+  weekday: { fontFamily: fonts.label, ...type.label, color: colors.muted, marginBottom: 4 },
   dayKey: {
     alignSelf: 'stretch',
     height: 44,
-    borderRadius: radius.key - 2,
-    borderBottomWidth: 4,
+    borderRadius: radius.paper,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.card,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  dayNum: { fontFamily: fonts.display, fontSize: 17 },
-  dayAmount: { fontFamily: fonts.mono, fontSize: 11, color: colors.muted, minHeight: 16, marginTop: 4 },
-  addButton: { minHeight: 44, justifyContent: 'center' },
-  add: { fontFamily: fonts.bold, fontSize: 13, letterSpacing: 1.4, color: colors.accent },
+  dayDue: { backgroundColor: machine.yellow, borderColor: machine.yellow },
+  dayToday: { borderWidth: 1.5, borderColor: colors.text },
+  dayNum: { fontFamily: fonts.numberBold, fontSize: 16, color: colors.text, fontVariant: ['tabular-nums'] },
+  dayAmount: { fontFamily: fonts.number, fontSize: 11, letterSpacing: tracking(11), fontVariant: ['tabular-nums'], color: colors.muted, minHeight: 16, marginTop: 4 },
 });

@@ -50,6 +50,7 @@ export function migrateState(state: Record<string, unknown>, version: number): S
 }
 
 interface BackupFile {
+  // The app was first called Tally. The id stays so older backups still restore.
   app: 'tally';
   version: number;
   exportedAt: string;
@@ -73,13 +74,13 @@ export function parseBackup(text: string): ParsedBackup {
   try {
     file = JSON.parse(text);
   } catch {
-    return { ok: false, error: "This file isn't a Tally backup." };
+    return { ok: false, error: "This file isn't an Abacus backup." };
   }
   if (file?.app !== 'tally' || typeof file.version !== 'number' || !file.state) {
-    return { ok: false, error: "This file isn't a Tally backup." };
+    return { ok: false, error: "This file isn't an Abacus backup." };
   }
   if (file.version > STATE_VERSION) {
-    return { ok: false, error: 'This backup was made by a newer version of Tally. Update the app and try again.' };
+    return { ok: false, error: 'This backup was made by a newer version of Abacus. Update the app and try again.' };
   }
   const state = migrateState(file.state as unknown as Record<string, unknown>, file.version);
   const lists = [state.envelopes, state.expenses, state.bills, state.transfers, state.accounts, state.incomes, state.goals];

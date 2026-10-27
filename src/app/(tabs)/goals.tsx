@@ -2,9 +2,10 @@ import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
-import { digits, Display, DisplayDigits, DisplayLabel, DisplayNote, Key, KeyLabel, PaperTape, PrintIn, tape, TickBar } from '@/components/machine';
+import { digits, Display, DisplayDigits, DisplayLabel, DisplayNote, PaperTape, PrintIn, tape } from '@/components/machine';
+import { AbacusRod } from '@/components/Abacus';
 import { colors, spacing } from '@/components/theme';
-import { SectionTitle, styles } from '@/components/ui';
+import { SectionTitle, styles, TextLink } from '@/components/ui';
 import { currentMonth, monthLabel, shortDateLabel } from '@/lib/dates';
 import { goalProgress, type GoalProgress } from '@/lib/goals';
 import { useMonthSummary } from '@/lib/hooks';
@@ -29,13 +30,9 @@ export default function GoalsScreen() {
       <Display>
         <DisplayLabel>Saved for goals</DisplayLabel>
         <DisplayDigits roll>{digits(saved)}</DisplayDigits>
-        <DisplayNote>{digits(perMonth)} / MO FROM SAVINGS</DisplayNote>
-        {savings && <DisplayNote>SAVINGS LEFT {digits(savings.available)}</DisplayNote>}
+        <DisplayNote>${digits(perMonth)} a month from savings</DisplayNote>
+        {savings && <DisplayNote>Savings left ${digits(savings.available)}</DisplayNote>}
       </Display>
-
-      <Key color="light" style={{ marginTop: spacing.md }} onPress={() => router.push('/goal')} accessibilityLabel="Add a goal">
-        <KeyLabel color="light" label="+ New goal" value="Something to buy" />
-      </Key>
 
       {open.length === 0 ? (
         <Text style={[styles.muted, { marginTop: spacing.md }]}>
@@ -53,6 +50,7 @@ export default function GoalsScreen() {
           <Text style={styles.muted}>Set aside on the 1st of each month from Savings / Discretionary.</Text>
         </>
       )}
+      <TextLink title="+ New goal" onPress={() => router.push('/goal')} />
 
       {bought.length > 0 && (
         <>
@@ -66,7 +64,7 @@ export default function GoalsScreen() {
                 style={[tape.line, tape.row]}
               >
                 <Text style={[tape.text, { flex: 1, color: colors.muted }]} numberOfLines={1}>
-                  {p.goal.name.toUpperCase()} · {monthLabel(p.goal.boughtMonth!)}
+                  {p.goal.name} · {monthLabel(p.goal.boughtMonth!)}
                 </Text>
                 <Text style={[tape.text, { color: colors.muted }]}>{digits(p.saved)} √</Text>
               </Pressable>
@@ -94,7 +92,7 @@ function GoalTape({ progress: p, onPress }: { progress: GoalProgress; onPress: (
       <PaperTape>
         <View style={tape.line}>
           <Text style={[tape.name, { flex: 1 }]} numberOfLines={1}>
-            {p.goal.name.toUpperCase()}
+            {p.goal.name}
           </Text>
           <Text style={[tape.caption, { marginTop: 0 }]}>by {target}</Text>
         </View>
@@ -102,7 +100,7 @@ function GoalTape({ progress: p, onPress }: { progress: GoalProgress; onPress: (
           <Text style={tape.text}>{digits(p.saved)}</Text>
           <Text style={tape.text}>of {digits(p.goal.price)}</Text>
         </View>
-        <TickBar fraction={p.goal.price > 0 ? p.saved / p.goal.price : 1} />
+        <AbacusRod fraction={p.goal.price > 0 ? p.saved / p.goal.price : 1} />
         <Text style={[tape.caption, ink]}>
           {behind ? `◆ ${plan}` : `${plan} ${p.status === 'saved' ? '*' : '+'}`}
         </Text>

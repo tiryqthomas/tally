@@ -4,9 +4,10 @@ import { ScrollView, Text } from 'react-native';
 
 import { EnvelopeBars, MonthBars, SpendLineChart } from '@/components/charts';
 import { MonthSwitcher } from '@/components/MonthSwitcher';
-import { colors } from '@/components/theme';
+import { digits, Display, DisplayDigits, DisplayLabel, DisplayNote, PaperTape } from '@/components/machine';
+import { spacing } from '@/components/theme';
 import { Card, SectionTitle, styles } from '@/components/ui';
-import { dailySpending, monthlyTotals, spendingByEnvelope, spendingPace } from '@/lib/analysis';
+import { dailySpending, monthlyTotals, paceName, spendingByEnvelope, spendingPace } from '@/lib/analysis';
 import { currentMonth, daysInMonth, today } from '@/lib/dates';
 import { useBudgetData } from '@/lib/hooks';
 import { formatMoney } from '@/lib/money';
@@ -30,26 +31,26 @@ export default function SpendingScreen() {
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <MonthSwitcher month={month} onChange={setMonth} max={thisMonth} />
 
-      <Card>
-        <Text style={styles.muted}>Variable spending</Text>
-        <Text style={styles.big}>{formatMoney(pace.spent)}</Text>
-        <Text style={[styles.muted, left < 0 && { color: colors.danger }]}>
+      <Display style={{ marginTop: spacing.sm }}>
+        <DisplayLabel>Spent this month</DisplayLabel>
+        <DisplayDigits roll>{digits(pace.spent)}</DisplayDigits>
+        <DisplayNote>
           {left >= 0
             ? `${formatMoney(left)} left of ${formatMoney(pace.budget)}`
             : `${formatMoney(-left)} over ${formatMoney(pace.budget)}`}
-          {month === thisMonth && ` · ${pace.ahead > 0 ? `${formatMoney(pace.ahead)} ahead of` : `${formatMoney(-pace.ahead)} under`} an even pace`}
-        </Text>
-        <SpendLineChart points={points} budget={pace.budget} days={days} month={month} height={180} />
-      </Card>
+          {month === thisMonth && ` · ${pace.ahead > 0 ? `${formatMoney(pace.ahead)} ahead of` : `${formatMoney(-pace.ahead)} under`} ${paceName(pace).short}`}
+        </DisplayNote>
+        <SpendLineChart points={points} budget={pace.budget} pace={pace.curve} paceLabel={paceName(pace).label} days={days} month={month} height={180} />
+      </Display>
 
       <SectionTitle>By category</SectionTitle>
-      <Card>
-        {byEnvelope.length === 0 ? (
-          <Text style={styles.muted}>Nothing logged this month.</Text>
-        ) : (
+      {byEnvelope.length === 0 ? (
+        <Text style={styles.muted}>Nothing logged this month.</Text>
+      ) : (
+        <PaperTape>
           <EnvelopeBars rows={byEnvelope} onPress={(id) => router.push(`/envelope/${id}`)} />
-        )}
-      </Card>
+        </PaperTape>
+      )}
 
       <SectionTitle>Fixed vs variable, last 6 months</SectionTitle>
       <Card>

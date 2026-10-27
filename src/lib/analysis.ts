@@ -46,17 +46,62 @@ export function variableBudget(data: BudgetData, month: Month): number {
 export interface Pace {
   spent: number;
   budget: number;
-  // What would have been spent by today at an even pace through the month.
+  // How the pace line is drawn: the average of recent months, or an even line to the budget
+  // when there's no history yet.
+  basis: 'average' | 'even';
+  // How many past months the average is taken over (0 for an even pace).
+  months: number;
+  // What the pace says should be spent by the end of each day of the month, day 1 first.
+  curve: number[];
+  // What the pace says should be spent by today.
   expected: number;
-  // Positive when spending is ahead of an even pace (spending fast).
+  // Positive when spending is ahead of the pace (spending fast).
   ahead: number;
+}
+
+const PACE_MONTHS = 3;
+
+// Spent by a point partway through a month. `at` runs from 0 (start) to the month's length
+// in days, and can fall between days, so months of different lengths line up.
+function spentBy(points: DailyPoint[], at: number): number {
+  const lo = Math.floor(at);
+  const before = lo > 0 ? points[lo - 1].cumulative : 0;
+  if (lo >= points.length) return before;
+  return before + (points[lo].cumulative - before) * (at - lo);
+}
+
+// The usual shape of a month's spending: for each day, the average spent by that point across
+// the last three months that had any spending. Months are lined up by how far through they are.
+// Null when there's no spending history yet.
+export function averagePace(expenses: Expense[], month: Month): { curve: number[]; months: number } | null {
+  const days = daysInMonth(month);
+  const past = Array.from({ length: PACE_MONTHS }, (_, i) => dailySpending(expenses, addMonths(month, -1 - i))).filter(
+    (points) => (points.at(-1)?.cumulative ?? 0) > 0,
+  );
+  if (past.length === 0) return null;
+  const curve = Array.from({ length: days }, (_, i) => {
+    const through = (i + 1) / days;
+    const total = past.reduce((t, points) => t + spentBy(points, through * points.length), 0);
+    return Math.round(total / past.length);
+  });
+  return { curve, months: past.length };
+}
+
+// What the pace line is called: in the chart legend, and in "ahead of …" notes.
+export function paceName(pace: Pace): { label: string; short: string } {
+  return pace.basis === 'average'
+    ? { label: `${pace.months}-month average`, short: 'your average' }
+    : { label: 'Even pace', short: 'pace' };
 }
 
 export function spendingPace(data: BudgetData, month: Month, todayDay: number): Pace {
   const spent = expensesIn(data.expenses, month).reduce((t, x) => t + x.amount, 0);
   const budget = variableBudget(data, month);
-  const expected = Math.round((budget * todayDay) / daysInMonth(month));
-  return { spent, budget, expected, ahead: spent - expected };
+  const days = daysInMonth(month);
+  const average = averagePace(data.expenses, month);
+  const curve = average?.curve ?? Array.from({ length: days }, (_, i) => Math.round((budget * (i + 1)) / days));
+  const expected = curve[Math.max(0, Math.min(days, todayDay) - 1)] ?? 0;
+  return { spent, budget, basis: average ? 'average' : 'even', months: average?.months ?? 0, curve, expected, ahead: spent - expected };
 }
 
 export interface EnvelopeSpend {

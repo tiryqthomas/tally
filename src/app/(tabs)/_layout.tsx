@@ -13,13 +13,13 @@ export default function TabLayout() {
       screenOptions={{
         tabBarActiveTintColor: colors.text,
         tabBarInactiveTintColor: machine.tabInactive,
-        tabBarStyle: { backgroundColor: machine.keyLight, borderTopColor: machine.keyLightEdge },
-        tabBarLabelStyle: { fontFamily: fonts.bold, letterSpacing: 0.8, textTransform: 'uppercase', fontSize: 11 },
+        tabBarStyle: { backgroundColor: colors.background, borderTopColor: colors.border },
+        tabBarLabelStyle: { fontFamily: fonts.label, fontSize: 11 },
         headerStyle: { backgroundColor: colors.background },
         headerShadowVisible: false,
         // Big left-aligned screen titles, like the month title on Home.
         headerTitleAlign: 'left',
-        headerTitleStyle: { color: colors.text, fontFamily: fonts.bold, fontSize: type.title.fontSize },
+        headerTitleStyle: { color: colors.text, fontFamily: fonts.bold, fontSize: type.title.fontSize, letterSpacing: type.title.letterSpacing },
         headerTitleContainerStyle: { paddingHorizontal: 4 },
         sceneStyle: { backgroundColor: colors.background },
       }}

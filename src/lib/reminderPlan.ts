@@ -71,7 +71,7 @@ export function planReminders(
           key: `${billKey(bill.id, date)}:${timing}`,
           at,
           title: `${bill.name} ${whenLabel(daysBefore)}`,
-          body: `${formatMoney(bill.amount)}${account ? ` from ${account.name}` : ''}. Open Tally to mark it paid.`,
+          body: `${formatMoney(bill.amount)}${account ? ` from ${account.name}` : ''}. Open Abacus to mark it paid.`,
         });
       }
     }

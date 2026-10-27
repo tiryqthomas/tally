@@ -49,7 +49,7 @@ export default function Onboarding() {
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={{ padding: spacing.lg }} keyboardShouldPersistTaps="handled">
-        <Text style={[styles.big, { marginBottom: spacing.sm }]}>Tally</Text>
+        <Text style={[styles.big, { marginBottom: spacing.sm }]}>Abacus</Text>
         {step === 'income' ? (
           <>
             <Text style={[styles.body, { marginBottom: spacing.lg }]}>

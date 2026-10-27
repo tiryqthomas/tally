@@ -208,6 +208,7 @@ export const useBudget = create<BudgetState>()(
       resetAll: () => set(empty()),
     }),
     {
+      // Named before the app became Abacus. Renaming it would lose everyone's saved data.
       name: 'tally-budget',
       version: STATE_VERSION,
       storage: createJSONStorage(() => Storage),

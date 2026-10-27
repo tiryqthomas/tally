@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Tally",
+    "name": "Abacus",
     "slug": "tally",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -30,8 +30,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Tally uses your photos so you can attach a receipt to something you spent. Photos stay on your phone.",
-          "cameraPermission": "Tally uses the camera so you can take a photo of a receipt. Photos stay on your phone.",
+          "photosPermission": "Abacus uses your photos so you can attach a receipt to something you spent. Photos stay on your phone.",
+          "cameraPermission": "Abacus uses the camera so you can take a photo of a receipt. Photos stay on your phone.",
           "microphonePermission": false
         }
       ],

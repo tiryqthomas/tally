@@ -5,7 +5,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { Fab } from '@/components/Fab';
 import { MonthSwitcher } from '@/components/MonthSwitcher';
 import { digits, PaperTape, PrintIn, tape } from '@/components/machine';
-import { colors, fonts, spacing } from '@/components/theme';
+import { colors, fonts, spacing, type } from '@/components/theme';
 import { Chips, styles } from '@/components/ui';
 import { expensesIn } from '@/lib/analysis';
 import { billKey, billsInMonth } from '@/lib/budget';
@@ -96,7 +96,7 @@ export default function TransactionsScreen() {
           <Text style={styles.muted}>
             {rows.length} {rows.length === 1 ? 'transaction' : 'transactions'}
           </Text>
-          <Text style={[styles.money, { fontFamily: fonts.monoBold, fontSize: 17 }]}>{formatMoney(total)}</Text>
+          <Text style={[styles.money, { fontFamily: fonts.numberBold, ...type.headline }]}>{digits(total)}</Text>
         </View>
 
         {groups.length === 0 && (
@@ -114,15 +114,13 @@ export default function TransactionsScreen() {
                     onPress={r.onPress}
                     accessibilityRole="button"
                     accessibilityLabel={`${r.title}, ${formatMoney(r.amount)}, ${r.detail}`}
-                    style={[tape.row, i > 0 && { borderTopWidth: 1, borderTopColor: colors.border }]}
+                    style={[tape.row, i > 0 && tape.divider]}
                   >
                     <View style={tape.line}>
                       <Text style={[tape.name, { flex: 1 }]} numberOfLines={1}>
-                        {r.title.toUpperCase()}
+                        {r.title}
                       </Text>
-                      <Text style={tape.name}>
-                        {digits(r.amount)} {r.kind === 'bill' ? '*' : '−'}
-                      </Text>
+                      <Text style={tape.amount}>−{digits(r.amount)}</Text>
                     </View>
                     <Text style={tape.caption}>{r.detail}</Text>
                   </Pressable>

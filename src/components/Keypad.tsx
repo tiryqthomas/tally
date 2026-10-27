@@ -1,6 +1,5 @@
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
 
-import { Key } from "./machine";
 import { colors, fonts, spacing } from "./theme";
 
 // Laid out like an adding machine, 7-8-9 on top.
@@ -20,36 +19,39 @@ export function applyKey(typed: string, key: string): string {
 export const typedCents = (typed: string) =>
   typed ? Math.round(Number(typed) * 100) : 0;
 
+// A ruled number pad, like the keys printed on a ledger: no key shapes, just hairlines.
 export function Keypad({ onPress }: { onPress: (key: string) => void }) {
   return (
     <View style={local.pad}>
-      {KEYS.map((k) => (
-        <Key
-          key={k}
-          onPress={() => onPress(k)}
-          style={local.key}
-          accessibilityLabel={k}
-        >
-          <Text style={local.keyText}>{k}</Text>
-        </Key>
+      {KEYS.map((k, i) => (
+        <PadKey key={k} label={k} onPress={() => onPress(k)} style={i % 3 < 2 ? local.ruled : undefined} />
       ))}
-      <Key
-        color="light"
-        onPress={() => onPress("C")}
-        style={local.wideKey}
-        accessibilityLabel="Clear"
-      >
-        <Text style={[local.keyText, local.darkText]}>C</Text>
-      </Key>
-      <Key
-        color="light"
-        onPress={() => onPress("⌫")}
-        style={local.wideKey}
-        accessibilityLabel="Delete last digit"
-      >
-        <Text style={[local.keyText, local.darkText]}>⌫</Text>
-      </Key>
+      <PadKey label="C" accessibilityLabel="Clear" onPress={() => onPress("C")} style={[local.wide, local.ruled]} />
+      <PadKey label="⌫" accessibilityLabel="Delete last digit" onPress={() => onPress("⌫")} style={local.wide} />
     </View>
+  );
+}
+
+function PadKey({
+  label,
+  onPress,
+  style,
+  accessibilityLabel,
+}: {
+  label: string;
+  onPress: () => void;
+  style?: StyleProp<ViewStyle>;
+  accessibilityLabel?: string;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? label}
+      onPress={onPress}
+      style={({ pressed }) => [local.key, style, pressed && local.pressed]}
+    >
+      <Text style={[local.keyText, label === "C" && local.wordText]}>{label}</Text>
+    </Pressable>
   );
 }
 
@@ -57,23 +59,24 @@ export const keypadStyles = StyleSheet.create({
   pad: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
+    borderTopWidth: 1,
+    borderColor: colors.border,
     marginBottom: spacing.md,
   },
   key: {
-    width: "31.5%",
-    flexGrow: 1,
+    width: "33.333%",
     alignItems: "center",
-    paddingVertical: 12,
+    justifyContent: "center",
+    minHeight: 56,
+    borderBottomWidth: 1,
+    borderColor: colors.border,
   },
-  wideKey: {
-    width: "48%",
-    flexGrow: 1,
-    alignItems: "center",
-    paddingVertical: 10,
-  },
-  keyText: { fontFamily: fonts.display, fontSize: 26, color: "#fff" },
-  darkText: { fontFamily: fonts.bold, fontSize: 22, color: colors.text },
+  // The hairline between columns.
+  ruled: { borderRightWidth: 1 },
+  wide: { width: "50%" },
+  pressed: { backgroundColor: colors.border },
+  keyText: { fontFamily: fonts.keys, fontSize: 26, color: colors.text },
+  wordText: { fontFamily: fonts.label, fontSize: 20 },
 });
 
 const local = keypadStyles;
