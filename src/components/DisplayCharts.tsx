@@ -9,14 +9,15 @@ import { fonts, machine } from './theme';
 
 // Charts drawn in ink and spruce for the readout at the top of Home.
 
+// Getters, so charts pick up the Light or Dark palette when they draw.
 export const INK = {
-  line: machine.digit,
-  dim: machine.digitDim,
-  faint: machine.digitFaint,
-  red: machine.digitRed,
-  yellow: machine.yellowEdge,
-  blue: machine.digitBlue,
-  white: machine.digitWhite,
+  get line() { return machine.digit; },
+  get dim() { return machine.digitDim; },
+  get faint() { return machine.digitFaint; },
+  get red() { return machine.digitRed; },
+  get yellow() { return machine.yellowEdge; },
+  get blue() { return machine.digitBlue; },
+  get white() { return machine.digitWhite; },
 };
 
 export const FONT = { fontFamily: fonts.label, fontSize: 11 };

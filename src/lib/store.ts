@@ -2,12 +2,26 @@ import Storage from './storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
-import { migrateState, STATE_VERSION, type SavedState } from './backup';
+import { migrateState, STATE_VERSION, type Appearance, type SavedState } from './backup';
+import { nextCategoryColor } from './categoryColors';
 import { billKey } from './budget';
 import { currentMonth, today } from './dates';
 import type { HomeChart } from './homeCharts';
 import type { ReminderSetting } from './reminderPlan';
-import type { Account, Bill, BudgetData, DateString, Envelope, Expense, Goal, Income, Month, Transfer } from './types';
+import {
+  CATEGORY_COLORS,
+  type Account,
+  type Bill,
+  type BudgetData,
+  type CategoryColor,
+  type DateString,
+  type Envelope,
+  type Expense,
+  type Goal,
+  type Income,
+  type Month,
+  type Transfer,
+} from './types';
 
 const newId = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
 
@@ -21,6 +35,7 @@ interface BudgetState extends SavedState {
   // and `limit` starts this month, so past months' savings don't change.
   addEnvelope: (name: string, limit: number, fromMonth?: Month) => string;
   renameEnvelope: (id: string, name: string) => void;
+  setEnvelopeColor: (id: string, color: CategoryColor) => void;
   // Changes the limit from the current month onward.
   setEnvelopeLimit: (id: string, limit: number) => void;
   archiveEnvelope: (id: string) => void;
@@ -45,6 +60,7 @@ interface BudgetState extends SavedState {
   removeGoal: (id: string) => void;
   setReminders: (setting: ReminderSetting) => void;
   setHomeChart: (chart: HomeChart) => void;
+  setAppearance: (appearance: Appearance) => void;
   // Replaces everything with a restored backup.
   restore: (state: SavedState) => void;
   resetAll: () => void;
@@ -55,6 +71,7 @@ const empty = (): SavedState => ({
   paidBills: [],
   reminders: ['day-before'],
   homeChart: 'pace',
+  appearance: 'system',
   incomes: [],
   envelopes: [],
   expenses: [],
@@ -92,13 +109,14 @@ export const useBudget = create<BudgetState>()(
           incomes: [{ fromMonth: currentMonth(), income }],
           startMonth: currentMonth(),
           envelopes: [
-            ...envelopes.map((e) => makeEnvelope(e.name, e.limit)),
+            ...envelopes.map((e, i) => ({ ...makeEnvelope(e.name, e.limit), color: CATEGORY_COLORS[i % CATEGORY_COLORS.length] })),
             makeEnvelope(SAVINGS_NAME, 0, true),
           ],
         }),
 
       addEnvelope: (name, limit, fromMonth) => {
         const envelope = makeEnvelope(name, limit);
+        envelope.color = nextCategoryColor(useBudget.getState().envelopes);
         if (fromMonth && fromMonth < envelope.createdMonth) {
           envelope.limits = [{ fromMonth, amount: 0 }, ...envelope.limits];
           envelope.createdMonth = fromMonth;
@@ -109,6 +127,9 @@ export const useBudget = create<BudgetState>()(
 
       renameEnvelope: (id, name) =>
         set((s) => ({ envelopes: s.envelopes.map((e) => (e.id === id ? { ...e, name } : e)) })),
+
+      setEnvelopeColor: (id, color) =>
+        set((s) => ({ envelopes: s.envelopes.map((e) => (e.id === id && !e.isSavings ? { ...e, color } : e)) })),
 
       setEnvelopeLimit: (id, amount) =>
         set((s) => {
@@ -202,6 +223,7 @@ export const useBudget = create<BudgetState>()(
 
       setReminders: (reminders) => set({ reminders }),
       setHomeChart: (homeChart) => set({ homeChart }),
+      setAppearance: (appearance) => set({ appearance }),
 
       restore: (state) => set({ ...empty(), ...state }),
 
@@ -225,6 +247,7 @@ export function selectSaved(s: BudgetState): SavedState {
     paidBills: s.paidBills,
     reminders: s.reminders,
     homeChart: s.homeChart,
+    appearance: s.appearance,
   };
 }
 

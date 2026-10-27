@@ -5,7 +5,7 @@ import { ScrollView, Text, View } from 'react-native';
 import { BillRow } from '@/components/BillCard';
 import { digits, Display, DisplayDigits, DisplayLabel, DisplayNote, PaperTape } from '@/components/machine';
 import { MonthCalendar } from '@/components/MonthCalendar';
-import { spacing } from '@/components/theme';
+import { spacing, useScheme } from '@/components/theme';
 import { Button, SectionTitle, styles } from '@/components/ui';
 import { billsBetween, nextSevenDays } from '@/lib/analysis';
 import { billKey, billsInMonth, type BillOccurrence } from '@/lib/budget';
@@ -17,6 +17,7 @@ import type { DateString } from '@/lib/types';
 const sum = (list: BillOccurrence[]) => list.reduce((t, o) => t + o.bill.amount, 0);
 
 export default function BillsScreen() {
+  useScheme();
   const router = useRouter();
   const bills = useBudget((s) => s.bills);
   const envelopes = useBudget((s) => s.envelopes);

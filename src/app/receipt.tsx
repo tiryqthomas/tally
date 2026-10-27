@@ -3,12 +3,13 @@ import { Image, Pressable, ScrollView, Text, useWindowDimensions, View } from 'r
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { keyColors } from '@/components/machine';
-import { machine, spacing } from '@/components/theme';
+import { machine, spacing, useScheme } from '@/components/theme';
 import { styles } from '@/components/ui';
 import { receiptUri } from '@/lib/receipts';
 
 // A receipt photo at full size. Pinch to zoom on iOS.
 export default function ReceiptScreen() {
+  useScheme();
   const router = useRouter();
   const { name } = useLocalSearchParams<{ name: string }>();
   const { width, height } = useWindowDimensions();

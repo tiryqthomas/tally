@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { addMonths, dateInMonth, daysInMonth, monthLabel, today, weekdayOf } from '@/lib/dates';
 import type { DateString, Month } from '@/lib/types';
 import { keyColors } from './machine';
-import { colors, fonts, spacing } from './theme';
+import { colors, fonts, spacing, themed } from './theme';
 
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
@@ -68,7 +68,7 @@ export function MonthCalendar({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   wrap: {
     backgroundColor: colors.card,
     borderRadius: 3,
@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
   daySelected: { backgroundColor: colors.text },
   dayToday: { borderWidth: 1.5, borderColor: colors.text },
   dayText: { fontFamily: fonts.label, fontSize: 16, color: colors.text, fontVariant: ['tabular-nums'] },
-  dayTextSelected: { color: '#fff' },
+  dayTextSelected: { color: colors.onInk },
   dot: { width: 6, height: 6, borderRadius: 1, marginTop: 2, backgroundColor: 'transparent' },
   dotOn: { backgroundColor: keyColors('yellow').edge },
-});
+}));

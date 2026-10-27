@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View, type TextInputProps, type ViewStyle } from 'react-native';
 
 import { keyColors } from './machine';
-import { colors, fonts, radius, spacing, type } from './theme';
+import { colors, fonts, radius, spacing, themed, type } from './theme';
 
 export function Card({ children, style }: { children: ReactNode; style?: ViewStyle }) {
   return <View style={[styles.card, style]}>{children}</View>;
@@ -140,19 +140,17 @@ export function SectionTitle({ children, first }: { children: ReactNode; first?:
   return <Text style={[styles.sectionTitle, first && { marginTop: spacing.xs }]}>{children}</Text>;
 }
 
-export const styles = StyleSheet.create({
+export const styles = themed(() => StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.gutter, paddingBottom: 132 },
   card: {
     backgroundColor: colors.card,
-    borderRadius: radius.paper,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.md,
+    borderRadius: radius.display,
+    padding: spacing.md + 2,
     marginBottom: spacing.sm,
   },
   button: {
-    borderRadius: radius.key + 2,
+    borderRadius: radius.pill,
     borderWidth: 1,
     minHeight: 52,
     justifyContent: 'center',
@@ -182,31 +180,32 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: radius.key,
+    borderRadius: radius.pill,
     backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: keyColors('light').edge,
   },
   chipSelected: { backgroundColor: colors.text, borderColor: colors.text },
   chipText: { fontFamily: fonts.label, color: colors.text, ...type.body },
-  chipTextSelected: { color: '#fff' },
+  chipTextSelected: { color: colors.onInk },
   barTrack: { height: 3, borderRadius: 2, backgroundColor: colors.border, overflow: 'hidden' },
   barFill: { height: 3 },
+  // Section titles are the serif, big enough to lead the cards under them.
   sectionTitle: {
-    fontFamily: fonts.label,
-    ...type.label,
-    fontSize: 13,
-    color: colors.muted,
-    marginTop: spacing.xl,
-    marginBottom: spacing.sm + 2,
+    fontFamily: fonts.serif,
+    ...type.section,
+    color: colors.text,
+    marginTop: spacing.xl + 4,
+    marginBottom: spacing.md - 4,
+    paddingHorizontal: 2,
   },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   textLink: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start' },
   textLinkText: { fontFamily: fonts.bold, ...type.body, color: colors.accent },
-  screenTitle: { fontFamily: fonts.bold, ...type.title, color: colors.text },
+  screenTitle: { fontFamily: fonts.serif, ...type.screen, color: colors.text },
   title: { fontFamily: fonts.bold, ...type.headline, color: colors.text },
   body: { fontFamily: fonts.body, ...type.body, color: colors.text },
   muted: { fontFamily: fonts.body, ...type.body, color: colors.muted },
   big: { fontFamily: fonts.display, ...type.hero, color: colors.text, fontVariant: ['tabular-nums'] },
   money: { fontFamily: fonts.number, ...type.body, color: colors.text, fontVariant: ['tabular-nums'] },
-});
+}));

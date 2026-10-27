@@ -1,6 +1,10 @@
 import type { HomeChart } from './homeCharts';
 import { toReminderSetting, type ReminderSetting } from './reminderPlan';
-import type { BudgetData, Income, Month } from './types';
+import { assignCategoryColors } from './categoryColors';
+import type { BudgetData, Envelope, Income, Month } from './types';
+
+// Light, Dark, or follow the phone.
+export type Appearance = 'system' | 'light' | 'dark';
 
 // Everything a backup file holds. Matches the saved app state.
 export interface SavedState extends BudgetData {
@@ -9,9 +13,10 @@ export interface SavedState extends BudgetData {
   reminders: ReminderSetting;
   // Which chart the display at the top of Home shows.
   homeChart: HomeChart;
+  appearance: Appearance;
 }
 
-export const STATE_VERSION = 4;
+export const STATE_VERSION = 5;
 
 // Receipt photos are saved under names the app makes up. Anything else in a
 // backup is ignored, so a file can never be written outside the receipts folder.
@@ -46,6 +51,9 @@ export function migrateState(state: Record<string, unknown>, version: number): S
       isReceiptName(receipt) ? { ...x, receipt } : x,
     );
   }
+  // v5 gives each category a color and adds the Appearance setting.
+  if (Array.isArray(s.envelopes)) s.envelopes = assignCategoryColors(s.envelopes as Envelope[]);
+  if (s.appearance !== 'light' && s.appearance !== 'dark') s.appearance = 'system';
   return s as unknown as SavedState;
 }
 

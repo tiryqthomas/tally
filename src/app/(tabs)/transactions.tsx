@@ -5,7 +5,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { Fab } from '@/components/Fab';
 import { MonthSwitcher } from '@/components/MonthSwitcher';
 import { digits, PaperTape, PrintIn, tape } from '@/components/machine';
-import { colors, fonts, spacing, type } from '@/components/theme';
+import { colors, fonts, spacing, type, useScheme } from '@/components/theme';
 import { Chips, styles } from '@/components/ui';
 import { expensesIn } from '@/lib/analysis';
 import { billKey, billsInMonth } from '@/lib/budget';
@@ -29,6 +29,7 @@ interface Row {
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 export default function TransactionsScreen() {
+  useScheme();
   const router = useRouter();
   const expenses = useBudget((s) => s.expenses);
   const bills = useBudget((s) => s.bills);
@@ -100,7 +101,7 @@ export default function TransactionsScreen() {
         </View>
 
         {groups.length === 0 && (
-          <Text style={[styles.muted, { marginTop: spacing.lg }]}>Nothing here yet. Tap + to log spending.</Text>
+          <Text style={[styles.muted, { marginTop: spacing.lg }]}>Nothing here yet. Tap Log expense to add one.</Text>
         )}
         {groups.map((g) => (
           <View key={g.date}>

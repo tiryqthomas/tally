@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View, type GestureResponderEvent, type LayoutChangeEvent } from 'react-native';
-import Svg, { Circle, Line, Path } from 'react-native-svg';
+import Svg, { Circle, G, Line, Path, Text as SvgText } from 'react-native-svg';
 
-import type { DailyPoint, EnvelopeSpend, MonthTotal } from '@/lib/analysis';
+import type { CategoryMonth, DailyPoint, EnvelopeSpend, MonthTotal } from '@/lib/analysis';
 import { monthLabel, parseMonth } from '@/lib/dates';
 import { formatMoney } from '@/lib/money';
-import type { Month } from '@/lib/types';
-import { AbacusRod } from './Abacus';
+import type { CategoryColor, Month } from '@/lib/types';
+import { CategoryBadge, CategoryRod, OverPill } from './Category';
 import { digits, tape } from './machine';
-import { chart, colors, fonts, machine, spacing } from './theme';
+import { categoryShades, chart, colors, fonts, machine, spacing, themed } from './theme';
 import { styles as ui } from './ui';
 
 const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -41,7 +41,7 @@ export function SpendLineChart({
 }) {
   const ink = onDisplay
     ? { line: machine.digit, pace: machine.digitDim, grid: machine.digitFaint, text: machine.digitDim, dotEdge: colors.background }
-    : { line: chart.variable, pace: chart.pace, grid: chart.grid, text: colors.muted, dotEdge: '#fff' };
+    : { line: chart.variable, pace: chart.pace, grid: chart.grid, text: colors.muted, dotEdge: colors.card };
   const [width, setWidth] = useState(0);
   const [hover, setHover] = useState<number | null>(null);
   const pad = { top: 10, bottom: 18, left: 2, right: 2 };
@@ -197,18 +197,24 @@ export function EnvelopeBars({ rows, onPress }: { rows: EnvelopeSpend[]; onPress
             onPress={onPress ? () => onPress(r.envelopeId) : undefined}
             accessibilityRole="button"
             accessibilityLabel={`${r.name}, ${formatMoney(r.spent)} spent${r.limit > 0 ? ` of ${formatMoney(r.limit)}` : ''}${over ? ', over' : ''}`}
-            style={[tape.row, i > 0 && tape.divider]}
+            style={[tape.row, tape.withBadge, i > 0 && tape.divider]}
           >
-            <View style={tape.line}>
-              <Text style={[tape.name, ink, { flex: 1 }]} numberOfLines={1}>
-                {r.name}
+            <CategoryBadge color={r.color} name={r.name} />
+            <View style={{ flex: 1 }}>
+              <View style={tape.line}>
+                <View style={tape.nameLine}>
+                  <Text style={tape.name} numberOfLines={1}>
+                    {r.name}
+                  </Text>
+                  {over && <OverPill />}
+                </View>
+                <Text style={[tape.amount, ink]}>{digits(r.spent)}</Text>
+              </View>
+              <CategoryRod color={r.color} fraction={r.limit > 0 ? r.spent / r.limit : 1} />
+              <Text style={[tape.caption, ink]}>
+                {r.limit > 0 ? `${over ? `Over by ${digits(r.spent - r.limit)} · ` : ''}of ${digits(r.limit)}` : 'No limit set'}
               </Text>
-              <Text style={[tape.amount, ink]}>{digits(r.spent)}</Text>
             </View>
-            <AbacusRod fraction={r.limit > 0 ? r.spent / r.limit : 1} red={over} />
-            <Text style={[tape.caption, ink]}>
-              {r.limit > 0 ? `${over ? `Over by ${digits(r.spent - r.limit)} · ` : ''}of ${digits(r.limit)}` : 'No limit set'}
-            </Text>
           </Pressable>
         );
       })}
@@ -216,8 +222,108 @@ export function EnvelopeBars({ rows, onPress }: { rows: EnvelopeSpend[]; onPress
   );
 }
 
-const local = StyleSheet.create({
+// This month's spending as a thick ring, one rounded segment per category in its color,
+// with the total in the middle.
+export function CategoryRing({ rows, size = 200 }: { rows: EnvelopeSpend[]; size?: number }) {
+  const total = rows.reduce((t, r) => t + r.spent, 0);
+  const stroke = 20;
+  const radius = (size - stroke) / 2;
+  const around = 2 * Math.PI * radius;
+  // Round caps reach past each segment's ends, so leave room for them plus a small gap.
+  const gap = rows.length > 1 ? stroke + 10 : 0;
+  let start = 0;
+  return (
+    <View style={{ alignItems: 'center', marginVertical: spacing.sm }} accessible accessibilityLabel={`${formatMoney(total)} spent`}>
+      <Svg width={size} height={size}>
+        <G rotation={-90} origin={`${size / 2}, ${size / 2}`}>
+          {rows.map((r) => {
+            const length = (r.spent / total) * around;
+            const dash = Math.max(length - gap, 0.5);
+            const offset = -(start + gap / 2);
+            start += length;
+            return (
+              <Circle
+                key={r.envelopeId}
+                cx={size / 2}
+                cy={size / 2}
+                r={radius}
+                fill="none"
+                stroke={categoryShades(r.color).fill}
+                strokeWidth={stroke}
+                strokeLinecap="round"
+                strokeDasharray={`${dash} ${around}`}
+                strokeDashoffset={offset}
+              />
+            );
+          })}
+        </G>
+        <SvgText x={size / 2} y={size / 2 + 4} textAnchor="middle" fontSize={30} fontFamily={fonts.serif} fill={colors.text}>
+          {formatMoney(total, { showCents: false })}
+        </SvgText>
+        <SvgText x={size / 2} y={size / 2 + 26} textAnchor="middle" fontSize={12} fontFamily={fonts.body} fill={colors.muted}>
+          spent
+        </SvgText>
+      </Svg>
+    </View>
+  );
+}
+
+// One category's last few months as rounded bars in its color, this month solid and earlier
+// months lighter, with this month's limit as a dashed line. A red dot marks a month that went over.
+export function CategoryMonthBars({ months, color, height = 150 }: { months: CategoryMonth[]; color: CategoryColor | 'savings'; height?: number }) {
+  const [width, setWidth] = useState(0);
+  const shade = categoryShades(color);
+  const limit = months.at(-1)?.limit ?? 0;
+  const top = Math.max(limit, ...months.map((m) => m.spent), 1) * 1.12;
+  const base = height - 22;
+  const y = (v: number) => base - (v / top) * (base - 10);
+  const slot = width / Math.max(months.length, 6);
+  const bar = Math.min(44, slot * 0.8);
+  const r = Math.min(8, bar / 2);
+  return (
+    <View
+      style={{ height, marginTop: spacing.sm }}
+      onLayout={(e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width)}
+      accessible
+      accessibilityLabel={months.map((m) => `${monthLabel(m.month)}: ${formatMoney(m.spent)}`).join(', ')}
+    >
+      {width > 0 && (
+        <Svg width={width} height={height}>
+          {months.map((m, i) => {
+            const x = i * slot + (slot - bar) / 2;
+            const t = Math.min(y(m.spent), base - 2);
+            const last = i === months.length - 1;
+            const h = base - t;
+            const rr = Math.min(r, h);
+            return (
+              <G key={m.month}>
+                <Path
+                  d={`M${x} ${base} V${t + rr} Q${x} ${t} ${x + rr} ${t} H${x + bar - rr} Q${x + bar} ${t} ${x + bar} ${t + rr} V${base} Z`}
+                  fill={last ? shade.fill : shade.faded}
+                />
+                {m.limit > 0 && m.spent > m.limit && <Circle cx={x + bar / 2} cy={t - 8} r={3} fill={colors.danger} />}
+                <SvgText
+                  x={x + bar / 2}
+                  y={height - 4}
+                  textAnchor="middle"
+                  fontSize={11}
+                  fontFamily={last ? fonts.bold : fonts.number}
+                  fill={last ? colors.text : colors.muted}
+                >
+                  {shortMonth(m.month)}
+                </SvgText>
+              </G>
+            );
+          })}
+          {limit > 0 && <Line x1={0} x2={width} y1={y(limit)} y2={y(limit)} stroke={colors.text} strokeWidth={1.2} strokeDasharray="3 4" strokeLinecap="round" />}
+        </Svg>
+      )}
+    </View>
+  );
+}
+
+const local = themed(() => StyleSheet.create({
   axis: { position: 'absolute', bottom: 0, fontSize: 11, letterSpacing: 0.1, fontFamily: fonts.number, fontVariant: ['tabular-nums'], color: colors.muted },
   budgetLabel: { position: 'absolute', left: 4, fontSize: 11, letterSpacing: 0.1, fontFamily: fonts.number, fontVariant: ['tabular-nums'], color: colors.muted },
   legend: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.sm, flexWrap: 'wrap' },
-});
+}));
