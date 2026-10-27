@@ -20,7 +20,13 @@ export interface Envelope {
   isSavings: boolean;
   createdMonth: Month;
   archivedMonth?: Month;
+  // The category's color on Home, in charts and on its own screen. Savings has none; it uses the accent.
+  color?: CategoryColor;
 }
+
+// Eight muted category colors, none of them red: red only ever means "over".
+export const CATEGORY_COLORS = ['slate', 'fern', 'clay', 'mustard', 'violet', 'lagoon', 'rose', 'olive'] as const;
+export type CategoryColor = (typeof CATEGORY_COLORS)[number];
 
 export interface Expense {
   id: string;

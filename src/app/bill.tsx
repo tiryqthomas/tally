@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Alert, ScrollView, Text } from 'react-native';
 
 import { MonthCalendar } from '@/components/MonthCalendar';
-import { spacing } from '@/components/theme';
+import { spacing, useScheme } from '@/components/theme';
 import { Button, Chips, Field, SectionTitle, styles } from '@/components/ui';
 import { isActive } from '@/lib/budget';
 import { currentMonth, monthOf, today } from '@/lib/dates';
@@ -19,6 +19,7 @@ const FREQUENCIES: { value: BillFrequency; label: string }[] = [
 
 // Add a new bill, or edit one when an id is passed.
 export default function BillScreen() {
+  useScheme();
   const router = useRouter();
   const params = useLocalSearchParams<{ id?: string; date?: string }>();
   const existing = useBudget((s) => s.bills.find((b) => b.id === params.id));

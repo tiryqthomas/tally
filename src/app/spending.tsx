@@ -2,10 +2,10 @@ import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { ScrollView, Text } from 'react-native';
 
-import { EnvelopeBars, MonthBars, SpendLineChart } from '@/components/charts';
+import { CategoryRing, EnvelopeBars, MonthBars, SpendLineChart } from '@/components/charts';
 import { MonthSwitcher } from '@/components/MonthSwitcher';
 import { digits, Display, DisplayDigits, DisplayLabel, DisplayNote, PaperTape } from '@/components/machine';
-import { spacing } from '@/components/theme';
+import { spacing, useScheme } from '@/components/theme';
 import { Card, SectionTitle, styles } from '@/components/ui';
 import { dailySpending, monthlyTotals, paceName, spendingByEnvelope, spendingPace } from '@/lib/analysis';
 import { currentMonth, daysInMonth, today } from '@/lib/dates';
@@ -13,6 +13,7 @@ import { useBudgetData } from '@/lib/hooks';
 import { formatMoney } from '@/lib/money';
 
 export default function SpendingScreen() {
+  useScheme();
   const router = useRouter();
   const data = useBudgetData();
   const thisMonth = currentMonth();
@@ -48,6 +49,7 @@ export default function SpendingScreen() {
         <Text style={styles.muted}>Nothing logged this month.</Text>
       ) : (
         <PaperTape>
+          <CategoryRing rows={byEnvelope} />
           <EnvelopeBars rows={byEnvelope} onPress={(id) => router.push(`/envelope/${id}`)} />
         </PaperTape>
       )}

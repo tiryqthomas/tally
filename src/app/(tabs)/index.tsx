@@ -5,18 +5,20 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { HomeDisplay } from '@/components/HomeDisplay';
 import { Fab } from '@/components/Fab';
-import { AbacusRod } from '@/components/Abacus';
+import { CategoryBadge, CategoryRod, OverPill } from '@/components/Category';
 import { digits, Display, PaperTape, PrintIn, tape, TapeNote } from '@/components/machine';
-import { colors, fonts, machine, radius, spacing, tracking, type } from '@/components/theme';
+import { colors, fonts, machine, radius, spacing, themed, tracking, type, useScheme } from '@/components/theme';
 import { SectionTitle, styles, TextLink } from '@/components/ui';
 import { billsBetween, nextSevenDays } from '@/lib/analysis';
 import { billKey, billsInMonth, billStatus, type EnvelopeMonth } from '@/lib/budget';
+import { colorOf } from '@/lib/categoryColors';
 import { monthLabel, shortDateLabel, today, weekdayOf } from '@/lib/dates';
 import { useHomeNumbers } from '@/lib/hooks';
 import { formatMoney } from '@/lib/money';
 import { useBudget } from '@/lib/store';
 
 export default function HomeScreen() {
+  useScheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { month, summary, todayDay, totalAvailable, pace, points, fixed } = useHomeNumbers();
@@ -33,7 +35,11 @@ export default function HomeScreen() {
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.sm }]}>
-        <Text style={[styles.screenTitle, local.month]}>{monthLabel(month)}</Text>
+        {/* "October" in the serif with the year small beside it. */}
+        <Text style={[styles.screenTitle, local.month]} accessibilityRole="header">
+          {monthLabel(month).replace(/\s\d{4}$/, '')}
+          <Text style={local.year}> {month.slice(0, 4)}</Text>
+        </Text>
 
         <Pressable onPress={() => router.push('/spending')} accessibilityRole="button" accessibilityLabel="Spending details">
           <Display>
@@ -137,7 +143,9 @@ function TapeRow({ row, first, onPress }: { row: EnvelopeMonth; first?: boolean;
   const negative = row.available < 0;
   // Red only when money ran out, not when bills used the envelope exactly as planned.
   const red = negative || row.coveredBySavings > 0;
+  // The name keeps its normal ink so the category stays recognizable; the amount and note turn red.
   const ink = red ? { color: colors.danger } : undefined;
+  const color = colorOf(row.envelope);
   const detail = row.envelope.isSavings
     ? `${digits(row.limit)} added · ${digits(row.rollover)} carried${row.goalsSetAside > 0 ? ` · ${digits(row.goalsSetAside)} to goals` : ''}`
     : `${digits(row.spent)} spent${row.billsSetAside > 0 ? ` · ${digits(row.billsSetAside)} bills` : ''} of ${digits(budget)}`;
@@ -146,19 +154,25 @@ function TapeRow({ row, first, onPress }: { row: EnvelopeMonth; first?: boolean;
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={`${row.envelope.name}, ${formatMoney(row.available)} left${red ? ', over budget' : ''}. ${detail}`}
-      style={[tape.row, !first && tape.divider]}
+      style={[tape.row, tape.withBadge, !first && tape.divider]}
     >
-      <View style={tape.line}>
-        <Text style={[tape.name, ink, { flex: 1 }]} numberOfLines={1}>
-          {row.envelope.name}
+      <CategoryBadge color={color} name={row.envelope.name} />
+      <View style={{ flex: 1 }}>
+        <View style={tape.line}>
+          <View style={tape.nameLine}>
+            <Text style={tape.name} numberOfLines={1}>
+              {row.envelope.name}
+            </Text>
+            {red && <OverPill />}
+          </View>
+          <Text style={[tape.amount, ink]}>{digits(row.available)}</Text>
+        </View>
+        <CategoryRod color={color} fraction={budget > 0 ? used / budget : negative ? 1 : 0} />
+        <Text style={[tape.caption, ink]}>
+          {red ? (negative ? 'Over · ' : 'Covered by savings · ') : ''}
+          {detail}
         </Text>
-        <Text style={[tape.amount, ink]}>{digits(row.available)}</Text>
       </View>
-      <AbacusRod fraction={budget > 0 ? used / budget : negative ? 1 : 0} red={red} />
-      <Text style={[tape.caption, red && { color: colors.danger }]}>
-        {red ? (negative ? 'Over · ' : 'Covered by savings · ') : ''}
-        {detail}
-      </Text>
     </Pressable>
   );
 }
@@ -230,18 +244,13 @@ function BillsWidget({ onPress }: { onPress: () => void }) {
   );
 }
 
-const local = StyleSheet.create({
-  month: { marginBottom: spacing.sm, paddingHorizontal: 2 },
-  // Two figures side by side between hairlines, like columns on a ledger page.
-  tiles: {
-    flexDirection: 'row',
-    marginTop: spacing.md,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: colors.border,
-  },
-  tile: { flex: 1, paddingVertical: spacing.md - 4 },
-  tileRight: { borderLeftWidth: 1, borderColor: colors.border, paddingLeft: spacing.md },
+const local = themed(() => StyleSheet.create({
+  month: { marginBottom: spacing.md, paddingHorizontal: 2 },
+  year: { fontFamily: fonts.body, fontSize: 15, letterSpacing: 0, color: colors.muted },
+  // Two small cards side by side.
+  tiles: { flexDirection: 'row', gap: spacing.sm + 2, marginTop: spacing.sm + 2 },
+  tile: { flex: 1, backgroundColor: colors.card, borderRadius: radius.display - 4, paddingVertical: spacing.md - 2, paddingHorizontal: spacing.md },
+  tileRight: {},
   tileValue: { fontFamily: fonts.numberBold, fontSize: 20, lineHeight: 26, letterSpacing: tracking(20), color: colors.text, marginTop: 2, fontVariant: ['tabular-nums'] },
   tileNote: { fontFamily: fonts.body, ...type.caption, color: colors.muted },
   label: { fontFamily: fonts.label, ...type.label, fontSize: 13, color: colors.muted },
@@ -252,7 +261,7 @@ const local = StyleSheet.create({
     height: 44,
     borderRadius: radius.paper,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.card,
     backgroundColor: colors.card,
     alignItems: 'center',
     justifyContent: 'center',
@@ -261,4 +270,4 @@ const local = StyleSheet.create({
   dayToday: { borderWidth: 1.5, borderColor: colors.text },
   dayNum: { fontFamily: fonts.numberBold, fontSize: 16, color: colors.text, fontVariant: ['tabular-nums'] },
   dayAmount: { fontFamily: fonts.number, fontSize: 11, letterSpacing: tracking(11), fontVariant: ['tabular-nums'], color: colors.muted, minHeight: 16, marginTop: 4 },
-});
+}));

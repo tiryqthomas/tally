@@ -3,8 +3,8 @@ import { useMemo } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { digits, Display, DisplayDigits, DisplayLabel, DisplayNote, PaperTape, PrintIn, tape } from '@/components/machine';
-import { AbacusRod } from '@/components/Abacus';
-import { colors, spacing } from '@/components/theme';
+import { CategoryRod } from '@/components/Category';
+import { colors, spacing, useScheme } from '@/components/theme';
 import { SectionTitle, styles, TextLink } from '@/components/ui';
 import { currentMonth, monthLabel, shortDateLabel } from '@/lib/dates';
 import { goalProgress, type GoalProgress } from '@/lib/goals';
@@ -12,6 +12,7 @@ import { useMonthSummary } from '@/lib/hooks';
 import { useBudget } from '@/lib/store';
 
 export default function GoalsScreen() {
+  useScheme();
   const router = useRouter();
   const month = currentMonth();
   const goals = useBudget((s) => s.goals);
@@ -100,7 +101,7 @@ function GoalTape({ progress: p, onPress }: { progress: GoalProgress; onPress: (
           <Text style={tape.text}>{digits(p.saved)}</Text>
           <Text style={tape.text}>of {digits(p.goal.price)}</Text>
         </View>
-        <AbacusRod fraction={p.goal.price > 0 ? p.saved / p.goal.price : 1} />
+        <CategoryRod color="savings" fraction={p.goal.price > 0 ? p.saved / p.goal.price : 1} />
         <Text style={[tape.caption, ink]}>
           {behind ? `◆ ${plan}` : `${plan} ${p.status === 'saved' ? '*' : '+'}`}
         </Text>

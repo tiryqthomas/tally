@@ -1,10 +1,11 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Redirect, Tabs } from 'expo-router';
 
-import { colors, fonts, machine, type } from '@/components/theme';
+import { colors, fonts, machine, type, useScheme } from '@/components/theme';
 import { useBudget } from '@/lib/store';
 
 export default function TabLayout() {
+  useScheme();
   const onboarded = useBudget((s) => s.onboarded);
   if (!onboarded) return <Redirect href="/onboarding" />;
 

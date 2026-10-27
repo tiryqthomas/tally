@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { IncomeForm, incomeFromDraft, type IncomeDraft } from '@/components/IncomeForm';
 import { PresetPicker } from '@/components/PresetPicker';
-import { colors, fonts, spacing } from '@/components/theme';
+import { colors, fonts, spacing, useScheme } from '@/components/theme';
 import { Button, Card, SectionTitle, styles } from '@/components/ui';
 import { monthlyIncome } from '@/lib/budget';
 import { formatMoney, parseMoney } from '@/lib/money';
@@ -22,6 +22,7 @@ let nextKey = 1;
 const draftEnvelope = (name: string): EnvelopeDraft => ({ key: nextKey++, name, limit: '' });
 
 export default function Onboarding() {
+  useScheme();
   const router = useRouter();
   const finishOnboarding = useBudget((s) => s.finishOnboarding);
   const [step, setStep] = useState<'income' | 'envelopes'>('income');

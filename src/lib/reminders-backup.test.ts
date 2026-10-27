@@ -81,6 +81,7 @@ describe('backups', () => {
     paidBills: ['rent:2026-11-01'],
     reminders: ['three-days', 'same-day'],
     homeChart: 'allowance',
+    appearance: 'dark',
   };
 
   test('round trips', () => {
@@ -133,6 +134,21 @@ describe('backups', () => {
     expect(migrated.reminders).toEqual(['day-before']);
     expect(migrated.homeChart).toBe('pace');
     expect(migrated.goals).toEqual([]);
+  });
+
+  test('gives older categories colors and follows the phone for appearance', () => {
+    const v4 = {
+      startMonth: '2026-10',
+      envelopes: [
+        { id: 'a', isSavings: false },
+        { id: 's', isSavings: true },
+        { id: 'b', isSavings: false },
+      ],
+    };
+    const migrated = migrateState(v4, 4);
+    expect(migrated.envelopes.map((e) => e.color)).toEqual(['slate', undefined, 'fern']);
+    expect(migrated.appearance).toBe('system');
+    expect(migrateState({ ...v4, appearance: 'dark' }, 5).appearance).toBe('dark');
   });
 
   test('turns the single reminder setting into a list', () => {

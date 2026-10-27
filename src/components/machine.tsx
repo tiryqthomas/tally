@@ -11,7 +11,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { formatMoney } from '@/lib/money';
-import { colors, fonts, machine, motion, radius, spacing, tracking, type } from './theme';
+import { colors, fonts, machine, motion, radius, spacing, themed, tracking, type } from './theme';
 
 // Calculator digits: no dollar sign, always cents, e.g. -123456 -> "-1,234.56".
 export function digits(cents: number): string {
@@ -29,16 +29,19 @@ export const motionAllowed = () => !reduceMotion;
 type KeyColor = 'grey' | 'light' | 'blue' | 'red' | 'yellow';
 
 // Face, hairline edge and legend color. Keys are flat: solid ink, white with a hairline, spruce, red or amber.
-const KEY: Record<KeyColor, { face: string; edge: string; text: string }> = {
-  grey: { face: machine.key, edge: machine.keyEdge, text: '#FFFFFF' },
-  light: { face: machine.keyLight, edge: machine.keyLightEdge, text: colors.text },
-  blue: { face: machine.blue, edge: machine.blueEdge, text: '#FFFFFF' },
-  red: { face: machine.red, edge: machine.redEdge, text: '#FFFFFF' },
-  yellow: { face: machine.yellow, edge: machine.yellowEdge, text: '#4A3A12' },
-};
+// Read at draw time so keys follow Light and Dark.
+function keyMap(): Record<KeyColor, { face: string; edge: string; text: string }> {
+  return {
+    grey: { face: machine.key, edge: machine.keyEdge, text: colors.onInk },
+    light: { face: machine.keyLight, edge: machine.keyLightEdge, text: colors.text },
+    blue: { face: machine.blue, edge: machine.blueEdge, text: colors.onInk },
+    red: { face: machine.red, edge: machine.redEdge, text: colors.onInk },
+    yellow: { face: machine.yellow, edge: machine.yellowEdge, text: colors.text },
+  };
+}
 
 export function keyColors(color: KeyColor) {
-  return KEY[color];
+  return keyMap()[color];
 }
 
 // A flat key. It dims a little when pressed.
@@ -57,7 +60,7 @@ export function Key({
   accessibilityLabel?: string;
   disabled?: boolean;
 }) {
-  const k = KEY[color];
+  const k = keyColors(color);
   return (
     <Pressable
       accessibilityRole={onPress ? 'button' : undefined}
@@ -79,7 +82,7 @@ export function Key({
 
 // Small label and amount printed on a key.
 export function KeyLabel({ color = 'grey', label, value }: { color?: KeyColor; label: string; value?: string }) {
-  const text = KEY[color].text;
+  const text = keyColors(color).text;
   return (
     <>
       <Text style={[styles.keyLabel, { color: text }]}>{label}</Text>
@@ -261,25 +264,27 @@ export function TapeNote({ children, action, onPress }: { children: ReactNode; a
 }
 
 // Text styles for anything on a sheet: names in the sans, amounts in the typewriter mono.
-export const tape = StyleSheet.create({
+export const tape = themed(() => StyleSheet.create({
   line: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.sm },
   name: { fontFamily: fonts.label, ...type.body, color: colors.text } as TextStyle,
   amount: { fontFamily: fonts.numberBold, ...type.body, color: colors.text, fontVariant: ['tabular-nums'] } as TextStyle,
   text: { fontFamily: fonts.body, ...type.body, color: colors.text } as TextStyle,
   caption: { fontFamily: fonts.body, ...type.caption, color: colors.muted, marginTop: 4 } as TextStyle,
-  row: { paddingVertical: spacing.sm },
-  // The dotted rule between rows on a sheet.
-  divider: { borderTopWidth: 1, borderStyle: 'dotted', borderTopColor: colors.border },
+  row: { paddingVertical: spacing.sm + 4 },
+  // A row led by a category's badge.
+  withBadge: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md - 4 },
+  nameLine: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexShrink: 1 },
+  // A soft rule between rows on a card.
+  divider: { borderTopWidth: StyleSheet.hairlineWidth * 2, borderTopColor: colors.border },
   total: {
-    borderTopWidth: 1,
-    borderStyle: 'dashed',
+    borderTopWidth: StyleSheet.hairlineWidth * 2,
     borderTopColor: colors.border,
     paddingTop: spacing.md - 4,
     marginTop: spacing.sm,
   },
-});
+}));
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   key: {
     borderRadius: radius.key,
     borderWidth: 1,
@@ -290,7 +295,8 @@ const styles = StyleSheet.create({
   keyLabel: { fontFamily: fonts.label, ...type.label },
   keyValue: { fontFamily: fonts.numberBold, fontSize: 20, lineHeight: 26, letterSpacing: tracking(20), marginTop: 2, fontVariant: ['tabular-nums'] },
   keyWords: { fontFamily: fonts.bold, fontSize: 18, letterSpacing: tracking(18) },
-  display: { paddingVertical: spacing.sm },
+  // The headline readout sits on its own rounded card.
+  display: { backgroundColor: colors.card, borderRadius: radius.display, padding: spacing.md + 2 },
   displayLabel: { fontFamily: fonts.label, ...type.label, color: machine.label },
   digits: {
     fontFamily: fonts.display,
@@ -298,18 +304,16 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
     fontVariant: ['tabular-nums'],
   },
-  displayNote: { fontFamily: fonts.label, fontSize: 13, color: colors.accent },
+  displayNote: { fontFamily: fonts.label, fontSize: 13, lineHeight: 18, color: colors.accent },
   tape: {
     backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.paper,
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.sm,
+    borderRadius: radius.display,
+    paddingHorizontal: spacing.md + 2,
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.xs,
   },
   track: { height: 3, borderRadius: 2, backgroundColor: colors.border, overflow: 'hidden', marginTop: 6 },
   fill: { height: 3 },
   noteInk: { color: colors.danger, marginTop: 0 },
   noteAction: { color: colors.text, fontFamily: fonts.bold, marginTop: 0 },
-});
+}));
