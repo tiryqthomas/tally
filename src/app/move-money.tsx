@@ -2,7 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Alert, ScrollView, Text } from 'react-native';
 
-import { spacing } from '@/components/theme';
+import { spacing, useScheme } from '@/components/theme';
 import { Button, Chips, Field, SectionTitle, styles } from '@/components/ui';
 import { currentMonth } from '@/lib/dates';
 import { useMonthSummary } from '@/lib/hooks';
@@ -10,6 +10,7 @@ import { formatMoney, parseMoney } from '@/lib/money';
 import { useBudget } from '@/lib/store';
 
 export default function MoveMoney() {
+  useScheme();
   const router = useRouter();
   const params = useLocalSearchParams<{ toEnvelopeId?: string }>();
   const summary = useMonthSummary(currentMonth());

@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Alert, ScrollView, Text } from 'react-native';
 
 import { PresetPicker } from '@/components/PresetPicker';
-import { spacing } from '@/components/theme';
+import { spacing, useScheme } from '@/components/theme';
 import { Button, Field, SectionTitle, styles } from '@/components/ui';
 import { isActive } from '@/lib/budget';
 import { currentMonth } from '@/lib/dates';
@@ -12,6 +12,7 @@ import { formatMoney, parseMoney } from '@/lib/money';
 import { SAVINGS_NAME, useBudget } from '@/lib/store';
 
 export default function NewEnvelope() {
+  useScheme();
   const router = useRouter();
   const addEnvelope = useBudget((s) => s.addEnvelope);
   const taken = useBudget((s) => s.envelopes)

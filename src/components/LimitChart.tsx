@@ -6,6 +6,7 @@ import { monthLabel } from "@/lib/dates";
 import { snapLimit, type LimitHistory, type MonthUse } from "@/lib/limits";
 import { FONT, INK, shortDollars } from "./DisplayCharts";
 import { digits } from "./machine";
+import { colors } from "./theme";
 
 const HEIGHT = 150;
 const TOP = 14;
@@ -165,7 +166,7 @@ export function LimitChart({
           <SvgText
             x={width - 31}
             y={y(limit) + 4}
-            fill="#121418"
+            fill={colors.onInk}
             textAnchor="middle"
             {...FONT}
             fontSize={12}

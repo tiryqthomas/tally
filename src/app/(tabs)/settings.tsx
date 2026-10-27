@@ -4,11 +4,11 @@ import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { HomeDisplay } from '@/components/HomeDisplay';
 import { draftFromIncome, IncomeForm, incomeFromDraft } from '@/components/IncomeForm';
 import { Display } from '@/components/machine';
-import { colors, spacing } from '@/components/theme';
+import { colors, spacing, useScheme } from '@/components/theme';
 import { Button, Card, Chips, Field, MultiChips, SectionTitle, styles } from '@/components/ui';
 import { incomeFor } from '@/lib/budget';
 import { currentMonth } from '@/lib/dates';
-import { receiptNames } from '@/lib/backup';
+import { receiptNames, type Appearance } from '@/lib/backup';
 import { exportBackup, pickBackup } from '@/lib/backupFile';
 import { HOME_CHART_OPTIONS, type HomeChart } from '@/lib/homeCharts';
 import { useHomeNumbers } from '@/lib/hooks';
@@ -18,17 +18,19 @@ import { reminderPermission, sendTestReminder, type ReminderPermission } from '@
 import { selectSaved, useBudget } from '@/lib/store';
 
 export default function SettingsScreen() {
+  useScheme();
   const income = incomeFor(useBudget((s) => s.incomes), currentMonth());
   const accounts = useBudget((s) => s.accounts);
   const reminders = useBudget((s) => s.reminders);
   const homeChart = useBudget((s) => s.homeChart);
+  const appearance = useBudget((s) => s.appearance);
   const expenses = useBudget((s) => s.expenses);
   // Receipt photos make backups bigger, so say how much they add.
   const receipts = useMemo(() => {
     const names = receiptNames({ expenses });
     return { count: names.length, megabytes: receiptsSize(names) / 1_000_000 };
   }, [expenses]);
-  const { setIncome, addAccount, deleteAccount, resetAll, setReminders, setHomeChart, restore } = useBudget.getState();
+  const { setIncome, addAccount, deleteAccount, resetAll, setReminders, setHomeChart, setAppearance, restore } = useBudget.getState();
   const [permission, setPermission] = useState<ReminderPermission>('undetermined');
   useEffect(() => {
     reminderPermission().then(setPermission);
@@ -113,7 +115,13 @@ export default function SettingsScreen() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-      <SectionTitle first>Monthly income</SectionTitle>
+      <SectionTitle first>Appearance</SectionTitle>
+      <Chips options={APPEARANCE_OPTIONS} value={appearance} onChange={setAppearance} />
+      <Text style={[styles.muted, { marginBottom: spacing.md }]}>
+        {appearance === 'system' ? "Matches your phone's light or dark setting." : appearance === 'dark' ? 'Always dark.' : 'Always light.'}
+      </Text>
+
+      <SectionTitle>Monthly income</SectionTitle>
       <IncomeForm draft={draft} onChange={setDraft} />
       <Button title="Save income" onPress={saveIncome} disabled={!parsed} />
 
@@ -184,6 +192,12 @@ export default function SettingsScreen() {
     </ScrollView>
   );
 }
+
+const APPEARANCE_OPTIONS: { value: Appearance; label: string }[] = [
+  { value: 'system', label: 'System' },
+  { value: 'light', label: 'Light' },
+  { value: 'dark', label: 'Dark' },
+];
 
 // Home's display with this month's real numbers, so people can see a chart before leaving Settings.
 function HomePreview({ chart }: { chart: HomeChart }) {

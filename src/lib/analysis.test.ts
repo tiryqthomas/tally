@@ -1,6 +1,6 @@
 import { describe, expect, test } from '@jest/globals';
 
-import { billsBetween, dailySpending, monthlyTotals, nextSevenDays, paceName, spendingByEnvelope, spendingPace, variableBudget } from './analysis';
+import { billsBetween, categoryHistory, dailySpending, monthlyTotals, nextSevenDays, paceName, spendingByEnvelope, spendingPace, variableBudget } from './analysis';
 import type { Bill, BudgetData } from './types';
 
 const rent: Bill = { id: 'r', name: 'Rent', amount: 120000, envelopeId: 'home', frequency: 'monthly', startDate: '2026-10-01' };
@@ -96,5 +96,18 @@ describe('analysis', () => {
       'Gym 2026-10-28',
       'Rent 2026-11-01',
     ]);
+  });
+
+  test('category history covers the months since the budget started', () => {
+    const d = data();
+    d.expenses.push({ id: '5', envelopeId: 'food', amount: 9000, date: '2026-11-04' });
+    const h = categoryHistory(d, 'food', '2026-11');
+    expect(h.months).toEqual([
+      { month: '2026-10', spent: 7500, limit: 60000 },
+      { month: '2026-11', spent: 9000, limit: 60000 },
+    ]);
+    expect(h.yearTotal).toBe(16500);
+    expect(h.monthlyAverage).toBe(7500);
+    expect(categoryHistory(d, 'food', '2026-10').monthlyAverage).toBeNull();
   });
 });

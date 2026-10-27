@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
 
-import { colors, fonts, spacing } from "./theme";
+import { colors, fonts, spacing, themed } from "./theme";
 
 // Laid out like an adding machine, 7-8-9 on top.
 const KEYS = ["7", "8", "9", "4", "5", "6", "1", "2", "3", "00", "0", "."];
@@ -55,7 +55,7 @@ function PadKey({
   );
 }
 
-export const keypadStyles = StyleSheet.create({
+export const keypadStyles = themed(() => StyleSheet.create({
   pad: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -77,6 +77,6 @@ export const keypadStyles = StyleSheet.create({
   pressed: { backgroundColor: colors.border },
   keyText: { fontFamily: fonts.keys, fontSize: 26, color: colors.text },
   wordText: { fontFamily: fonts.label, fontSize: 20 },
-});
+}));
 
 const local = keypadStyles;

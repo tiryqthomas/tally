@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { MonthCalendar } from '@/components/MonthCalendar';
-import { colors, fonts, spacing } from '@/components/theme';
+import { colors, fonts, spacing, useScheme } from '@/components/theme';
 import { Button, Field, SectionTitle, styles } from '@/components/ui';
 import { addMonths, currentMonth, monthLabel, monthOf, today } from '@/lib/dates';
 import { goalProgress } from '@/lib/goals';
@@ -16,6 +16,7 @@ const toInput = (cents: number) => (cents / 100).toFixed(2);
 
 // Add a goal, or edit one when an id is passed.
 export default function GoalScreen() {
+  useScheme();
   const router = useRouter();
   const params = useLocalSearchParams<{ id?: string }>();
   const existing = useBudget((s) => s.goals.find((g) => g.id === params.id));

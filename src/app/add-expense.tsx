@@ -5,7 +5,7 @@ import { Alert, Platform, Pressable, ScrollView, Text, View } from 'react-native
 import { applyKey, Keypad, typedCents } from '@/components/Keypad';
 import { Display, DisplayDigits, DisplayLabel, DisplayNote } from '@/components/machine';
 import { ReceiptField } from '@/components/ReceiptField';
-import { spacing } from '@/components/theme';
+import { spacing, useScheme } from '@/components/theme';
 import { Button, Card, Chips, Field, SectionTitle, styles as ui } from '@/components/ui';
 import { summarizeMonth } from '@/lib/budget';
 import { currentMonth, monthLabel, monthOf, shortDateLabel, toDateString, today } from '@/lib/dates';
@@ -17,6 +17,7 @@ import { selectData, useBudget } from '@/lib/store';
 type DayChoice = 'today' | 'yesterday';
 
 export default function AddExpense() {
+  useScheme();
   const router = useRouter();
   const params = useLocalSearchParams<{ envelopeId?: string; id?: string }>();
   // Set when editing an expense that was already logged.
@@ -178,7 +179,7 @@ export default function AddExpense() {
       <Field label="Note (optional)" value={note} onChangeText={setNote} placeholder="Where or what" />
       <ReceiptField value={receipt} onChange={changeReceipt} />
       <Button
-        title={cents <= 0 ? 'Enter an amount' : existing ? 'Save changes' : `−=  Spend ${formatMoney(cents)}`}
+        title={cents <= 0 ? 'Enter an amount' : existing ? 'Save changes' : `Log ${formatMoney(cents)}`}
         variant={existing ? 'primary' : 'spend'}
         onPress={save}
         disabled={cents <= 0 || !envelopeId}

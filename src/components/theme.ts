@@ -1,80 +1,207 @@
-// "Ledger": quiet off-white paper, black ink and one spruce green accent. The calculator
-// lives on in the details: typewriter-style numbers, a receipt-style list and a ruled keypad.
-export const colors = {
-  background: '#F4F4F1', // paper
-  card: '#FFFFFF', // a clean sheet on the paper
-  text: '#17191C', // ink
-  muted: '#61646A', // 5.6:1 on the paper, so small labels pass WCAG AA
-  border: '#DEDED8',
-  accent: '#2F5D50', // spruce
-  accentSoft: '#E3ECE8',
-  danger: '#B3392B', // red ink
-  dangerSoft: '#F6DDD9',
-  warning: '#8F6410',
+import { createContext, useContext } from 'react';
+
+import type { CategoryColor } from '@/lib/types';
+
+// "Editorial": warm off-white pages, rounded white cards, one deep green for money, and a color
+// for each category so people learn Groceries is green and Dining out is orange. Fraunces (soft)
+// sets screen and section titles; Figtree sets everything else, numbers included. Dark mode is
+// its own palette, not an inversion: near-black green-grey, cards one step lighter, colors lifted.
+export type Scheme = 'light' | 'dark';
+
+const palettes = {
+  light: {
+    colors: {
+      background: '#F6F4EF', // the page
+      card: '#FFFFFF', // a card on the page
+      text: '#17191A',
+      muted: '#62665F', // 5.4:1 on the page, so small labels pass WCAG AA
+      border: '#E6E4DD',
+      accent: '#1F5A43', // deep green: money totals and positive actions
+      accentSoft: '#E3ECE7',
+      danger: '#C0392B', // only ever means "over"
+      dangerSoft: '#F8E4E0',
+      warning: '#8F6410',
+      onInk: '#FFFFFF', // text on a solid ink button
+    },
+    machine: {
+      key: '#17191A', // primary buttons are solid ink
+      keyEdge: '#17191A',
+      keyLight: '#FFFFFF',
+      keyLightEdge: '#E6E4DD',
+      blue: '#1F5A43',
+      blueEdge: '#1F5A43',
+      red: '#C0392B',
+      redEdge: '#C0392B',
+      yellow: '#F3E8CC', // bill days: a soft amber
+      yellowEdge: '#8F6410',
+      display: '#17191A', // dark backdrop, e.g. behind receipt photos
+      digit: '#1F5A43', // chart lines
+      digitDim: '#62665F',
+      digitFaint: '#E6E4DD', // gridlines
+      label: '#62665F',
+      digitRed: '#C0392B',
+      digitBlue: '#8DB3A4',
+      digitWhite: '#17191A',
+      tabInactive: '#8A8D88',
+    },
+    chart: { variable: '#17191A', fixed: '#1F5A43', pace: '#8A8D88', grid: '#EEECE6' },
+    category: {
+      slate: '#5A6B9C',
+      fern: '#3D8B5C',
+      clay: '#D7743F',
+      mustard: '#C99A2E',
+      violet: '#8662B5',
+      lagoon: '#2B8F9C',
+      rose: '#B85C86',
+      olive: '#7D8A3A',
+    } as Record<CategoryColor, string>,
+  },
+  dark: {
+    colors: {
+      background: '#101211',
+      card: '#1B1E1C',
+      text: '#EEEFEC',
+      muted: '#9AA09C',
+      border: '#2C312E',
+      accent: '#7FC4A2',
+      accentSoft: '#20342A',
+      danger: '#F07A68',
+      dangerSoft: '#3A201C',
+      warning: '#E0B458',
+      onInk: '#101211',
+    },
+    machine: {
+      key: '#EEEFEC',
+      keyEdge: '#EEEFEC',
+      keyLight: '#1B1E1C',
+      keyLightEdge: '#2C312E',
+      blue: '#7FC4A2',
+      blueEdge: '#7FC4A2',
+      red: '#F07A68',
+      redEdge: '#F07A68',
+      yellow: '#3B3220',
+      yellowEdge: '#E0B458',
+      display: '#000000',
+      digit: '#7FC4A2',
+      digitDim: '#9AA09C',
+      digitFaint: '#2C312E',
+      label: '#9AA09C',
+      digitRed: '#F07A68',
+      digitBlue: '#4F7D6D',
+      digitWhite: '#EEEFEC',
+      tabInactive: '#6E7470',
+    },
+    chart: { variable: '#EEEFEC', fixed: '#7FC4A2', pace: '#7C827E', grid: '#252927' },
+    category: {
+      slate: '#8D9DD0',
+      fern: '#6CC08D',
+      clay: '#F0975F',
+      mustard: '#E6BE57',
+      violet: '#B394E0',
+      lagoon: '#5CC3CF',
+      rose: '#E08BB1',
+      olive: '#B0BE63',
+    } as Record<CategoryColor, string>,
+  },
 };
 
-// Keys, the amount readout and the inks used on Home's chart.
-export const machine = {
-  key: '#17191C', // primary keys are solid ink
-  keyEdge: '#17191C',
-  keyLight: '#FFFFFF', // secondary keys are white with a hairline
-  keyLightEdge: '#D6D6CF',
-  blue: '#2F5D50', // "picked" and positive actions use the spruce accent
-  blueEdge: '#2F5D50',
-  red: '#B3392B',
-  redEdge: '#B3392B',
-  yellow: '#F3E8CC', // bill days: a soft ledger amber
-  yellowEdge: '#8F6410',
-  display: '#17191C', // dark backdrop, e.g. behind receipt photos
-  digit: '#2F5D50', // chart lines
-  digitDim: '#61646A',
-  digitFaint: '#E4E4DE', // gridlines
-  label: '#61646A',
-  // Extra inks for charts.
-  digitRed: '#B3392B',
-  digitBlue: '#7FA699',
-  digitWhite: '#17191C',
-  // Inactive tab labels.
-  tabInactive: '#8A8C91',
-};
+// The live palette. These objects are updated in place when the scheme changes, so code can keep
+// reading `colors.text` at render time. Screens call useScheme() so they re-render on a change.
+export const colors = { ...palettes.light.colors };
+export const machine = { ...palettes.light.machine };
+export const chart = { ...palettes.light.chart };
+const category = { ...palettes.light.category };
 
-// Chart series colors on paper, checked for color-blind separation and 3:1 contrast on white.
-export const chart = {
-  variable: '#17191C',
-  fixed: '#2F5D50',
-  pace: '#8A8C91',
-  grid: '#ECECE7',
-};
+let current: Scheme = 'light';
+let version = 0;
 
-// Geist for everything, including amounts, set with tabular figures so columns of money line up.
-// Geist Mono is kept for the keypad digits and the "−=" sign: the one place the calculator shows.
+export function applyScheme(scheme: Scheme) {
+  if (scheme === current) return;
+  current = scheme;
+  version += 1;
+  Object.assign(colors, palettes[scheme].colors);
+  Object.assign(machine, palettes[scheme].machine);
+  Object.assign(chart, palettes[scheme].chart);
+  Object.assign(category, palettes[scheme].category);
+}
+
+export const SchemeContext = createContext<Scheme>('light');
+
+// Call at the top of a screen so it redraws in the new colors when Appearance changes.
+export function useScheme(): Scheme {
+  return useContext(SchemeContext);
+}
+
+// Styles built from the palette. Wrap StyleSheet.create in this so a style sheet is rebuilt the
+// first time it's read after the scheme changes.
+export function themed<T extends object>(make: () => T): T {
+  let built = make();
+  let builtFor = version;
+  return new Proxy({} as T, {
+    get(_, key) {
+      if (builtFor !== version) {
+        built = make();
+        builtFor = version;
+      }
+      return built[key as keyof T];
+    },
+  });
+}
+
+// Blend two #RRGGBB colors; t = 0 gives a, t = 1 gives b.
+export function mix(a: string, b: string, t: number): string {
+  const pa = parseInt(a.slice(1), 16);
+  const pb = parseInt(b.slice(1), 16);
+  const ch = (p: number, shift: number) => (p >> shift) & 255;
+  const out = [16, 8, 0].map((s) => Math.round(ch(pa, s) + (ch(pb, s) - ch(pa, s)) * t));
+  return `#${out.map((v) => v.toString(16).padStart(2, '0')).join('')}`;
+}
+
+// A category's color and the shades drawn from it: `fill` for beads, bars and its slice of a
+// chart; `tint` behind its icon; `ink` for its icon and any text in its color, darkened in
+// light mode so it stays readable on white; `rod` for the abacus string.
+export function categoryShades(key: CategoryColor | 'savings') {
+  const fill = key === 'savings' ? colors.accent : category[key];
+  return {
+    fill,
+    tint: mix(colors.card, fill, current === 'dark' ? 0.2 : 0.15),
+    band: mix(colors.card, fill, current === 'dark' ? 0.22 : 0.18),
+    ink: current === 'dark' ? fill : mix(fill, colors.text, 0.25),
+    rod: mix(colors.border, fill, 0.45),
+    faded: mix(colors.card, fill, 0.4),
+  };
+}
+
 export const fonts = {
-  display: 'Geist_600SemiBold', // the big readout amount
-  number: 'Geist_400Regular',
-  numberBold: 'Geist_500Medium',
-  keys: 'GeistMono_400Regular',
-  body: 'Geist_400Regular',
-  label: 'Geist_500Medium',
-  bold: 'Geist_600SemiBold',
-  brand: 'Geist_700Bold',
+  serif: 'Fraunces_400Soft', // screen and section titles
+  serifMedium: 'Fraunces_500Soft',
+  display: 'Figtree_600SemiBold', // the big amount
+  number: 'Figtree_400Regular',
+  numberBold: 'Figtree_500Medium',
+  keys: 'Figtree_500Medium', // keypad digits
+  body: 'Figtree_400Regular',
+  label: 'Figtree_500Medium',
+  bold: 'Figtree_600SemiBold',
+  brand: 'Figtree_700Bold',
 };
 
-// Letter spacing in points for a font size. Geist has no optical sizes, so big text is tightened and
-// small text opened slightly; body sizes keep the font's own spacing and kerning.
+// Letter spacing in points for a font size: big text is tightened a little, small text opened.
 export function tracking(size: number): number {
-  const em = size >= 28 ? -0.02 : size >= 20 ? -0.01 : size >= 13 ? 0 : 0.01;
+  const em = size >= 28 ? -0.015 : size >= 20 ? -0.008 : size >= 13 ? 0 : 0.01;
   return Math.round(em * size * 100) / 100;
 }
 
 export const spacing = { xs: 4, sm: 8, md: 16, gutter: 20, lg: 24, xl: 32, xxl: 48 };
 
-// Three corner sizes: sheets and inputs, keys and chips, larger panels.
-export const radius = { paper: 6, key: 10, display: 14 };
+// Rounded throughout: inputs, chips and keys, cards, and pill buttons.
+export const radius = { paper: 14, key: 16, display: 24, pill: 999 };
 
-// Seven text sizes, about 1.25x apart. Everything is sentence case.
+// Text sizes. Screen and section titles are serif; everything else is Figtree, sentence case.
 export const type = {
-  hero: { fontSize: 48, lineHeight: 52, letterSpacing: tracking(48) },
+  hero: { fontSize: 48, lineHeight: 54, letterSpacing: tracking(48) },
   display: { fontSize: 28, lineHeight: 32, letterSpacing: tracking(28) },
+  screen: { fontSize: 38, lineHeight: 44, letterSpacing: -0.4 },
+  section: { fontSize: 25, lineHeight: 30, letterSpacing: -0.2 },
   title: { fontSize: 28, lineHeight: 34, letterSpacing: tracking(28) },
   headline: { fontSize: 17, lineHeight: 22, letterSpacing: tracking(17) },
   body: { fontSize: 15, lineHeight: 21, letterSpacing: tracking(15) },

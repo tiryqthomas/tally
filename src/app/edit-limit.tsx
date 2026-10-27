@@ -17,7 +17,7 @@ import {
   DisplayNote,
   Key,
 } from "@/components/machine";
-import { fonts, spacing } from "@/components/theme";
+import { fonts, spacing, themed, useScheme } from "@/components/theme";
 import { Button, styles as ui } from "@/components/ui";
 import { currentMonth, monthLabel } from "@/lib/dates";
 import { useBudgetData, useMonthSummary } from "@/lib/hooks";
@@ -32,6 +32,7 @@ const asTyped = (cents: number) =>
 
 // Sets a category's monthly limit on the calculator, against what it used in past months.
 export default function EditLimit() {
+  useScheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const month = currentMonth();
@@ -165,8 +166,8 @@ export default function EditLimit() {
 
 const used = (u: { spent: number; bills: number }) => u.spent + u.bills;
 
-const local = StyleSheet.create({
+const local = themed(() => StyleSheet.create({
   steps: { flexDirection: "row", gap: 8, marginBottom: 8 },
   step: { flex: 1, alignItems: "center", paddingVertical: 12 },
   avgText: { fontFamily: fonts.label, fontSize: 20 },
-});
+}));

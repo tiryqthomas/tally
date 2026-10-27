@@ -1,6 +1,7 @@
-import { billsInMonth, isActive, limitFor, type BillOccurrence } from './budget';
+import { billsInMonth, isActive, limitFor, summarizeMonths, type BillOccurrence } from './budget';
 import { addMonths, daysInMonth, monthOf, monthsBetween, toDateString } from './dates';
-import type { Bill, BudgetData, DateString, Expense, Month } from './types';
+import { colorOf } from './categoryColors';
+import type { Bill, BudgetData, CategoryColor, DateString, Expense, Month } from './types';
 
 // Variable spending only: what was logged by hand. Bills are fixed expenses.
 export function expensesIn(expenses: Expense[], month: Month): Expense[] {
@@ -107,6 +108,7 @@ export function spendingPace(data: BudgetData, month: Month, todayDay: number): 
 export interface EnvelopeSpend {
   envelopeId: string;
   name: string;
+  color: CategoryColor | 'savings';
   spent: number;
   limit: number;
 }
@@ -120,6 +122,7 @@ export function spendingByEnvelope(data: BudgetData, month: Month): EnvelopeSpen
     .map((e) => ({
       envelopeId: e.id,
       name: e.name,
+      color: colorOf(e),
       spent: spent.get(e.id)!,
       limit: e.isSavings ? 0 : limitFor(e, month),
     }))
@@ -153,4 +156,27 @@ export function billsBetween(bills: Bill[], start: DateString, end: DateString):
 export function nextSevenDays(from: DateString): DateString[] {
   const [y, m, d] = from.split('-').map(Number);
   return Array.from({ length: 7 }, (_, i) => toDateString(new Date(y, m - 1, d + i)));
+}
+
+export interface CategoryMonth {
+  month: Month;
+  spent: number;
+  limit: number;
+}
+
+// One category's spending month by month, oldest first, ending with `month`: up to `count`
+// months, never before the budget started. Also what it spent this calendar year, and its
+// average over the finished months of the year.
+export function categoryHistory(data: BudgetData, envelopeId: string, month: Month, count = 6) {
+  const all = summarizeMonths(data, month).flatMap((m) => {
+    const e = m.envelopes.find((x) => x.envelope.id === envelopeId);
+    return e ? [{ month: m.month, spent: e.spent, limit: e.limit }] : [];
+  });
+  const year = all.filter((m) => m.month.slice(0, 4) === month.slice(0, 4));
+  const finished = year.filter((m) => m.month < month);
+  return {
+    months: all.slice(-count) as CategoryMonth[],
+    yearTotal: year.reduce((t, m) => t + m.spent, 0),
+    monthlyAverage: finished.length ? Math.round(finished.reduce((t, m) => t + m.spent, 0) / finished.length) : null,
+  };
 }

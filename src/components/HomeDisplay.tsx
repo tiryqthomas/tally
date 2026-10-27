@@ -8,6 +8,7 @@ import type { Month } from '@/lib/types';
 import { SpendLineChart } from './charts';
 import { AllowanceBars, CategoryBars, IncomeBar, MonthCompareLines } from './DisplayCharts';
 import { digits, DisplayDigits, DisplayLabel, DisplayNote } from './machine';
+import { useScheme } from './theme';
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
@@ -32,6 +33,8 @@ export function HomeDisplay({
   const data = useBudgetData();
   const summary = useMonthSummary(month);
   const days = daysInMonth(month);
+  // The charts are kept between renders, so redraw them when Appearance changes.
+  const scheme = useScheme();
 
   const content = useMemo(() => {
     switch (chart) {
@@ -101,7 +104,7 @@ export function HomeDisplay({
         };
       }
     }
-  }, [chart, data, summary, month, todayDay, days, totalAvailable, pace, points, fixedTotal]);
+  }, [chart, data, summary, month, todayDay, days, totalAvailable, pace, points, fixedTotal, scheme]);
 
   return (
     <>
